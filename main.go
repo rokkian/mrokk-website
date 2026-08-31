@@ -182,6 +182,9 @@ func main() {
 	}
 
 	r := chi.NewRouter()
+	r.Use(middleware.Throttle(100))
+	r.Use(readOnlyRequests)
+	r.Use(securityHeaders)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
@@ -256,10 +259,44 @@ func main() {
 		Addr:              ":" + port,
 		Handler:           r,
 		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		MaxHeaderBytes:    16 << 10,
 	}
 
 	log.Printf("personal website listening on port %s", port)
 	log.Fatal(server.ListenAndServe())
+}
+
+func readOnlyRequests(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			w.Header().Set("Allow", "GET, HEAD")
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		if len(r.RequestURI) > 8<<10 {
+			http.Error(w, "request URI too long", http.StatusRequestURITooLong)
+			return
+		}
+
+		// There are no request bodies in this application. Limit one anyway so a
+		// future handler cannot accidentally accept an unbounded upload.
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func securityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'")
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		next.ServeHTTP(w, r)
+	})
 }
 
 func loadContent(path string) (Content, error) {

@@ -19,7 +19,7 @@ The site is organized into a landing page, a one-page CV, and a separate blog:
 - `/blog` — blog index
 - `/blog/{slug}` — individual blog post
 - `/contacts` — public contact links
-- `/rickrolled` — event NFC joke page with configurable video and contact links
+- `/mattrolled` — event NFC joke page with configurable video and contact links
 
 Add posts under `blog.posts` in `content.yaml`. Content remains centralized in that file.
 
@@ -36,32 +36,22 @@ The server reads `content.yaml` once at startup. Restart `go run .` after changi
 
 ## Deploy to Cloud Run
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for the concise deployment and Cloudflare operations guide.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the Cloud Run and Cloudflare guide. The [justfile](justfile) provides the main commands.
 
-The deployment files are in `Dockerfile` and `deploy/cloudrun.yaml`. Replace `PROJECT_ID` in the manifest with your Google Cloud project ID.
-
-```sh
-gcloud config set project PROJECT_ID
-gcloud services enable run.googleapis.com artifactregistry.googleapis.com
-gcloud artifacts repositories create personal-site \
-  --repository-format=docker \
-  --location=europe-west1
-
-gcloud builds submit \
-  --tag europe-west1-docker.pkg.dev/PROJECT_ID/personal-site/mrokk-web:latest
-
-sed 's/PROJECT_ID/your-real-project-id/g' deploy/cloudrun.yaml > /tmp/mrokk-cloudrun.yaml
-gcloud run services replace /tmp/mrokk-cloudrun.yaml --region=europe-west1
-gcloud run services add-iam-policy-binding mrokk-web \
-  --region=europe-west1 \
-  --member="allUsers" \
-  --role="roles/run.invoker"
-```
-
-Cloud Run will print a service URL after deployment. The manifest is the service configuration; the container image must be rebuilt whenever Go code, templates, CSS, JavaScript, images, or `content.yaml` changes.
+Set `GCP_PROJECT_ID` if your Google Cloud project is not `pinebula`, then run `just config`, `just enable-apis`, `just create-repository`, and `just deploy`.
 
 ## Connect `mrokk.com` through Cloudflare
 
-After the service is deployed, map `mrokk.com` to `mrokk-web` using Cloud Run's custom-domain flow. Google will provide the DNS records required for the mapping. Add those records in Cloudflare DNS. If Cloudflare proxying causes certificate validation trouble, temporarily set the record to DNS-only while the Google-managed certificate provisions.
+After deployment, connect `mrokk.com` with:
+
+```sh
+just verify-domain
+just map-domain
+just domain-records
+```
+
+If Google asks you to verify ownership, complete the displayed Search Console verification step. Then copy every `resourceRecords` entry from `just domain-records` into Cloudflare DNS. Use the exact record types and values; for the apex domain, Cloud Run commonly returns `@` A/AAAA records.
+
+Set the Cloudflare records to **DNS only** (gray cloud) while the Google-managed HTTPS certificate provisions. Certificate provisioning can take several minutes and occasionally up to 24 hours. Once `https://mrokk.com` works, you can try enabling Cloudflare proxying. If validation or renewal has trouble, leave the records DNS-only and ensure Cloudflare's **Always Use HTTPS** setting is disabled. Cloud Run domain mappings are currently Preview; Google recommends a global external Application Load Balancer for production-grade custom-domain setups. [Cloud Run custom domains](https://docs.cloud.google.com/run/docs/mapping-custom-domains)
 
 The `embed` package includes the templates and CSS in the compiled program, so the app can be run as a single binary later.

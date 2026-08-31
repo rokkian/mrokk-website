@@ -17,3 +17,4 @@ COPY content.yaml ./content.yaml
 EXPOSE 8080
 USER nonroot:nonroot
 ENTRYPOINT ["/app/gowebsite"]
+

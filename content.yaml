@@ -70,19 +70,19 @@ certifications:
     - name: Professional Cloud Architect
       issuer: Google Cloud
       issued: January 2026
-      link: '#replace-with-certification-link'
+      link: https://www.credly.com/badges/794de2e9-45f6-4d82-bb83-3c370da8fe8a/public_url
     - name: Professional Machine Learning Engineer
       issuer: Google Cloud
       issued: October 2025
-      link: '#replace-with-certification-link'
+      link: https://www.credly.com/badges/f927a9e0-250e-4deb-afb9-667c1b2dce52/public_url
     - name: Professional Cloud Database Engineer
       issuer: Google Cloud
       issued: April 2025
-      link: '#replace-with-certification-link'
+      link: https://www.credly.com/badges/a232efa3-cf96-4a45-a883-9a2648451435
     - name: Professional Data Engineer
       issuer: Google Cloud
       issued: April 2024
-      link: '#replace-with-certification-link'
+      link: https://www.credly.com/badges/fd6fc288-4976-43b9-bf95-ee3634a28e0f
 
 work:
   label: 04 / Selected work
