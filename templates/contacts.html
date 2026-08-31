@@ -1,0 +1,46 @@
+{{define "contacts.html"}}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Public contact links for {{.Content.SiteName}}.">
+  <meta name="theme-color" content="#f4f5ef">
+  <title>{{.Content.SiteName}} — Contacts</title>
+  <link rel="icon" type="image/png" href="/static/images/favicon.png">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="/">{{.Content.SiteName}}<span>.</span></a>
+    <nav aria-label="Primary navigation">
+      <a href="/">Home</a>
+      <a href="/me">CV</a>
+      <a href="/blog">Blog</a>
+      <a href="/contacts">Contacts</a>
+      <button class="theme-toggle" type="button" aria-label="{{.Content.Theme.DarkLabel}}" data-light-label="{{.Content.Theme.LightLabel}}" data-dark-label="{{.Content.Theme.DarkLabel}}" aria-pressed="false">
+        <span class="sun" aria-hidden="true">☼</span><span class="moon" aria-hidden="true">☾</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="inner-page">
+    <section class="page-intro">
+      <p class="eyebrow">{{.Content.Contact.Label}}</p>
+      <h1>Let's connect.</h1>
+      <p class="intro">Find me through any of these public channels.</p>
+    </section>
+    <section class="detail-section contact-links">
+      {{range .Content.Contact.Links}}
+      <a class="contact-link" href="{{.URL}}"{{if hasPrefix .URL "http"}} target="_blank" rel="noreferrer"{{end}}>
+        <span><strong>{{.Name}}</strong><small>{{.Description}}</small></span><span class="arrow-link">↗</span>
+      </a>
+      {{end}}
+    </section>
+  </main>
+
+  {{template "site-footer" .}}
+  <script src="/static/theme.js"></script>
+</body>
+</html>
+{{end}}

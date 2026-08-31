@@ -1,0 +1,114 @@
+{{define "index.html"}}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="{{.Content.MetaDescription}}">
+  <meta name="theme-color" content="#f4f5ef">
+  <title>{{.Content.SiteName}} — Personal website</title>
+  <link rel="icon" type="image/png" href="/static/images/favicon.png">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="/">{{.Content.SiteName}}<span>.</span></a>
+    <nav aria-label="Primary navigation">
+      <a href="/">Home</a>
+      <a href="/me">CV</a>
+      <a href="/blog">{{.Content.Navigation.Blog}}</a>
+      <a href="/contacts">Contacts</a>
+      <button class="theme-toggle" type="button" aria-label="{{.Content.Theme.DarkLabel}}" data-light-label="{{.Content.Theme.LightLabel}}" data-dark-label="{{.Content.Theme.DarkLabel}}" aria-pressed="false">
+        <span class="sun" aria-hidden="true">☼</span><span class="moon" aria-hidden="true">☾</span>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="about">
+      <div class="hero-copy">
+        <p class="eyebrow">{{.Content.Hero.Eyebrow}}</p>
+        <h1>{{.Content.Hero.Title}}</h1>
+        <p class="intro">{{.Content.Hero.Intro}}</p>
+        <a class="button" href="#work">{{.Content.Hero.Cta}} <span>↓</span></a>
+      </div>
+      {{if .Content.Hero.Image}}<figure class="hero-image"><img src="{{.Content.Hero.Image}}" alt="{{.Content.Hero.ImageAlt}}"></figure>{{end}}
+    </section>
+
+    <section class="about-grid">
+      <p class="section-label">{{.Content.About.Label}}</p>
+      <div>
+        <h2>{{.Content.About.Title}}</h2>
+        <p>{{.Content.About.Text}}</p>
+      </div>
+    </section>
+
+    <section class="experience" id="experience">
+      <div class="section-heading">
+        <p class="section-label">{{.Content.Experience.Label}}</p>
+        <p class="muted">{{.Content.Experience.Intro}}</p>
+      </div>
+      <div class="experience-list">
+        {{range .Content.Experience.Entries}}
+        <article class="experience-row">
+          <p class="experience-period">{{.Period}}</p>
+          <div>
+            <h3>{{.Role}} <span>· {{.Company}}</span></h3>
+            <p>{{.Description}}</p>
+          </div>
+        </article>
+        {{end}}
+      </div>
+    </section>
+
+    <section class="certifications" id="certifications">
+      <div class="section-heading">
+        <p class="section-label">{{.Content.Certifications.Label}}</p>
+        <p class="muted">{{.Content.Certifications.Intro}}</p>
+      </div>
+      <div class="certification-list">
+        {{range .Content.Certifications.Certificates}}
+        <article class="certification-row">
+          <div>
+            <h3>{{.Name}}</h3>
+            <p>{{.Issuer}} · {{.Issued}}</p>
+          </div>
+          {{if .Link}}<a class="arrow-link" href="{{.Link}}" aria-label="View {{.Name}} certification">↗</a>{{end}}
+        </article>
+        {{end}}
+      </div>
+    </section>
+
+    <section class="work" id="work">
+      <div class="section-heading">
+        <p class="section-label">{{.Content.Work.Label}}</p>
+        <p class="muted">{{.Content.Work.Intro}}</p>
+      </div>
+      <div class="project-list">
+        {{range $index, $project := .Content.Work.Projects}}
+        <article class="project-card">
+          <div>
+            <p class="project-number">{{printf "%02d" (addOne $index)}}</p>
+            <h3>{{$project.Name}}</h3>
+            <p>{{$project.Description}}</p>
+            <div class="tags">
+              {{range $project.Tags}}<span>{{.}}</span>{{end}}
+            </div>
+          </div>
+          <a class="arrow-link" href="{{$project.Link}}" aria-label="Open {{$project.Name}}">↗</a>
+        </article>
+        {{end}}
+      </div>
+    </section>
+
+    <section class="contact" id="contact">
+      <p class="section-label">{{.Content.Contact.Label}}</p>
+      <h2>{{.Content.Contact.Title}}<br><a href="mailto:{{.Content.Contact.Email}}">{{.Content.Contact.Cta}}<span>↗</span></a></h2>
+    </section>
+  </main>
+
+  {{template "site-footer" .}}
+  <script src="/static/theme.js"></script>
+</body>
+</html>
+{{end}}

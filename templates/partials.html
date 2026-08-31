@@ -1,0 +1,7 @@
+{{define "site-footer"}}
+<footer>
+  <span>© {{.Year}} {{.Content.SiteName}}</span>
+  <button class="email-copy" type="button" data-email="{{.Content.Contact.Email}}" aria-live="polite">{{.Content.Contact.Email}}</button>
+  <span>{{.Content.Footer.Tagline}}</span>
+</footer>
+{{end}}

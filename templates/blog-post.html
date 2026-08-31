@@ -1,0 +1,41 @@
+{{define "blog-post.html"}}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="{{.Post.Summary}}">
+  <meta name="theme-color" content="#f4f5ef">
+  <title>{{.Content.SiteName}} — {{.Post.Title}}</title>
+  <link rel="icon" type="image/png" href="/static/images/favicon.png">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="/">{{.Content.SiteName}}<span>.</span></a>
+    <nav aria-label="Primary navigation">
+      <a href="/">Home</a>
+      <a href="/me">CV</a>
+      <a href="/blog">{{.Content.Navigation.Blog}}</a>
+      <a href="/contacts">Contacts</a>
+      <button class="theme-toggle" type="button" aria-label="{{.Content.Theme.DarkLabel}}" data-light-label="{{.Content.Theme.LightLabel}}" data-dark-label="{{.Content.Theme.DarkLabel}}" aria-pressed="false">
+        <span class="sun" aria-hidden="true">☼</span><span class="moon" aria-hidden="true">☾</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="inner-page">
+    <article class="post-page">
+      <a class="back-link" href="/blog">← All posts</a>
+      <p class="eyebrow">{{.Post.Date}}</p>
+      <h1>{{.Post.Title}}</h1>
+      <div class="tags">{{range .Post.Tags}}<span>{{.}}</span>{{end}}</div>
+      <div class="post-body">{{.Post.Body}}</div>
+    </article>
+  </main>
+
+  {{template "site-footer" .}}
+  <script src="/static/theme.js"></script>
+</body>
+</html>
+{{end}}

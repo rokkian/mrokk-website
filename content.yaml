@@ -1,0 +1,197 @@
+site_name: mrokk
+meta_description: The personal website of mrokk.
+
+navigation:
+  about: About
+  experience: Experience
+  work: Work
+  blog: Blog
+  contact: Contact
+
+hero:
+  eyebrow: Hello, I'm
+  title: Matteo.
+  intro: Cloud and data engineer working with Google Cloud, Terraform, Python, and modern data platforms while building thoughtful things for the web.
+  cta: See what I'm making
+  image: /static/images/ista_enhanced.jpeg
+  image_alt: Portrait of mrokk
+
+about:
+  label: 01 / About
+  title: Cloud engineer, data engineer, and lifelong learner.
+  text: I design and build cloud infrastructures and data platforms, with a focus on Google Cloud, Terraform, BigQuery, Dataform, Dataplex, Python, and PySpark. My experience spans public-sector analytics, telecommunications infrastructure, energy forecasting, fintech payments, machine learning, and AI data platforms. I am also a Google Cloud Certified Professional Cloud Architect and Professional Machine Learning Engineer.
+
+experience:
+  label: 02 / Experience
+  intro: The places and roles that shaped me.
+  entries:
+    - period: June 2024 — Present
+      role: Cloud & Data Engineer
+      company: Datwave
+      location: Milan/Remote
+      description: |
+        Working across cloud engineering, data engineering, and AI platform development:
+        - Designed analytics data architecture for an Italian regional government agency with BigQuery, Dataform, and Dataplex.
+        - Developed cloud architecture and infrastructure-as-code with Terraform.
+        - Developed and provisioned Google Cloud infrastructure and customer-specific Terraform modules for a Swiss telecommunications company.
+        - Built a proof of concept for extracting data-lineage metadata from legacy COBOL and SAS codebases with Google Cloud, Python, LangChain, and Podman.
+        - Designed a data platform to provide customer-assistance AI chatbots with contextual data from batch and real-time external systems, using Google Cloud, Python, BigQuery, and Terraform.
+    - period: May 2022 — June 2024
+      role: Junior Cloud & Data Engineer
+      company: BIP
+      location: Bologna/Remote
+      description: |
+        Worked on energy-management and fintech-payments data projects:
+        - Maintained energy-retail and business data workflows with Python and PySpark on Cloudera and Azure Databricks.
+        - Prepared and analyzed energy-commodity data with Python, Pandas, and Polars.
+        - Maintained and developed data reports and BI products with Python notebooks and Microsoft Excel.
+        - Maintained and developed fintech data workflows with PySpark, deploying and executing them through Tuber and Airflow on on-premise Kubernetes and Spark clusters.
+    - period: October 2021 — April 2022
+      role: Junior Software Developer and Data Analyst
+      company: PLANNET S.r.l.
+      location: Reggio Emilia
+      description: |
+        Designed and developed a machine-learning system to forecast industrial production time series, built data-processing pipelines for model preparation, and created and maintained Power BI reports for historical production data.
+    - period: June 2021 — July 2021
+      role: Content Analyst
+      company: Majorel
+      location: Kraków/Remote
+      description: Analyzed websites for compliance with Google Search Ads policies.
+    - period: May 2019 — October 2019
+      role: IT Administrator Intern
+      company: Stars & Cows
+      location: Fiorano Modenese
+      description: Managed and maintained office infrastructure and assets, set up office systems and software integrations, and contributed to web development.
+
+certifications:
+  label: 03 / Certifications
+  intro: Professional credentials and continued learning.
+  certificates:
+    - name: Professional Cloud Architect
+      issuer: Google Cloud
+      issued: January 2026
+      link: '#replace-with-certification-link'
+    - name: Professional Machine Learning Engineer
+      issuer: Google Cloud
+      issued: October 2025
+      link: '#replace-with-certification-link'
+    - name: Professional Cloud Database Engineer
+      issuer: Google Cloud
+      issued: April 2025
+      link: '#replace-with-certification-link'
+    - name: Professional Data Engineer
+      issuer: Google Cloud
+      issued: April 2024
+      link: '#replace-with-certification-link'
+
+work:
+  label: 04 / Selected work
+  intro: Selected projects and technical explorations.
+  projects:
+    - name: DSP — Recognition of sound features
+      description: Matlab project for computing unique parameters of WAV sound files to compare different sounds. Features include attack time, zero crossings, brightness, spectrum irregularity, and odd and even spectrum components across time and frequency domains.
+      tags: [Matlab, Digital Signal Processing]
+      link: '#contact'
+    - name: Cloud and data platform explorations
+      description: A place to document experiments with Google Cloud, Terraform, Go, Kubernetes, data engineering, and machine learning.
+      tags: [Google Cloud, Terraform, Go]
+      link: '#contact'
+
+education:
+  label: 05 / Education
+  intro: How I started in this field
+  degrees:
+    - name: Master in Cloud & Data Engineering
+      institution: Politecnico di Milano / Cefriel
+      location: Milan
+      description: |
+        Specialization in Cloud & Data Engineering, topics covered:
+         - modern data engineering
+         - Cloud Computing
+         - Machine learning
+         - DevOps
+      duration: May 2022 — May 2024
+      grade: 110/110
+    - name: MSc in Computer Engineering
+      institution: Unimore - DIEF
+      location: Modena
+      duration: October 2019 — June 2022
+      grade: 107/110
+      description: |
+        Specialization on Data Engineering and Databases
+    - name: BSc in Industrial Engineering
+      institution: Unimore - DISMI
+      location: Reggio Emilia
+      duration: September 2016 - December 2019
+      description: |
+        Specialization in ICT information management
+
+volunteering:
+  - role: Organizer
+    organization: GDG Cloud Milano
+    period: November 2024 — Present
+    field: Science and Technology
+  - role: Gardener
+    organization: Southdownway Caravan & Camping Park
+    period: August 2016 — September 2016
+    field: Social Services
+    description: Supported the charity-run campground through gardening, small maintenance, and cleaning.
+
+languages:
+  - name: English
+    proficiency: Professional working proficiency
+    duolingo_score: 130
+
+skills:
+  - Python
+  - Data Engineering
+  - Google Cloud Platform (GCP)
+  - Terraform
+  - BigQuery
+  - Dataform
+  - PySpark
+  - Pandas
+  - Polars
+  - SQL
+  - Kubernetes
+  - Airflow
+  - Machine Learning
+  - LangChain
+  - Go
+
+contact:
+  label: 06 / Say hello
+  title: Have an idea?
+  cta: Let's talk
+  email: hello@mrokk.com
+  links:
+    - name: Telegram
+      url: https://t.me/rokkia101
+      description: Message me on Telegram
+    - name: LinkedIn
+      url: https://www.linkedin.com/in/mrokk/
+      description: Connect with me professionally
+    - name: hello@mrokk.com
+      url: mailto:hello@mrokk.com
+      description: Send me an email
+
+footer:
+  tagline: Made with Go/Chi & Codex
+
+theme:
+  light_label: Switch to light mode
+  dark_label: Switch to dark mode
+
+blog:
+  label: 07 / Blog
+  intro: Notes on cloud engineering, data, machine learning, and learning in public.
+  posts: []
+
+mattrolled:
+  eyebrow: Congratulations, you found it.
+  title: You've been Mattrolled.
+  message: You were looking for a professional conversation and found my secret NFC page instead. Since you're here, let's connect.
+  video: /static/videos/Make_me_a_video_of_me_dancing.mp4
+  gif_alt: Funny dancing video of Matteo
+  telegram: https://t.me/rokkia101
+  linkedin: https://www.linkedin.com/in/mrokk/

@@ -1,0 +1,51 @@
+{{define "blog.html"}}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="{{.Content.Blog.Intro}}">
+  <meta name="theme-color" content="#f4f5ef">
+  <title>{{.Content.SiteName}} — Blog</title>
+  <link rel="icon" type="image/png" href="/static/images/favicon.png">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="/">{{.Content.SiteName}}<span>.</span></a>
+    <nav aria-label="Primary navigation">
+      <a href="/">Home</a>
+      <a href="/me">CV</a>
+      <a href="/blog">{{.Content.Navigation.Blog}}</a>
+      <a href="/contacts">Contacts</a>
+      <button class="theme-toggle" type="button" aria-label="{{.Content.Theme.DarkLabel}}" data-light-label="{{.Content.Theme.LightLabel}}" data-dark-label="{{.Content.Theme.DarkLabel}}" aria-pressed="false">
+        <span class="sun" aria-hidden="true">☼</span><span class="moon" aria-hidden="true">☾</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="inner-page">
+    <section class="page-intro">
+      <p class="eyebrow">{{.Content.Blog.Label}}</p>
+      <h1>Notes.</h1>
+      <p class="intro">{{.Content.Blog.Intro}}</p>
+    </section>
+    <section class="detail-section blog-list">
+      {{if .Content.Blog.Posts}}
+        {{range .Content.Blog.Posts}}
+        <article class="blog-card">
+          <p class="experience-period">{{.Date}}</p>
+          <div><h2><a href="/blog/{{.Slug}}">{{.Title}}</a></h2><p>{{.Summary}}</p><div class="tags">{{range .Tags}}<span>{{.}}</span>{{end}}</div></div>
+        </article>
+        {{end}}
+      {{else}}
+        <p class="empty-state">The first post is on its way.</p>
+      {{end}}
+    </section>
+  </main>
+
+  {{template "site-footer" .}}
+  <script src="/static/theme.js"></script>
+</body>
+</html>
+{{end}}
