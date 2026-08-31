@@ -20,8 +20,22 @@ The site is organized into a landing page, a one-page CV, and a separate blog:
 - `/blog/{slug}` — individual blog post
 - `/contacts` — public contact links
 - `/mattrolled` — event NFC joke page with configurable video and contact links
+- `/healthz` — lightweight health check returning `200 OK`
 
-Add posts under `blog.posts` in `content.yaml`. Content remains centralized in that file.
+Add posts under `blog.posts` in `content.yaml`. Each post can point to a Markdown file in `blog/`:
+
+```yaml
+blog:
+  posts:
+    - slug: first-post
+      title: My first post
+      date: August 2026
+      summary: A short description shown on the blog index.
+      tags: [Go, Cloud Run]
+      source: first-post.md
+```
+
+Then create `blog/first-post.md` using normal Markdown. The post is rendered to safe HTML at startup and included in the deployed container. Inline `body` Markdown is also supported for small posts.
 
 ## Where to start customizing
 

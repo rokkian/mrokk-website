@@ -185,7 +185,13 @@ theme:
 blog:
   label: 07 / Blog
   intro: Notes on cloud engineering, data, machine learning, and learning in public.
-  posts: []
+  posts:
+    - slug: lorem
+      title: Lorem Ipsum
+      date: August 2026
+      summary: Blog Article
+      tags: [Notes]
+      source: lorem.md
 
 mattrolled:
   eyebrow: Congratulations, you found it.

@@ -95,3 +95,57 @@ func TestSecurityHeaders(t *testing.T) {
 		}
 	}
 }
+
+func TestRenderMarkdown(t *testing.T) {
+	rendered, err := renderMarkdown("# Hello\n\nThis is **bold**.")
+	if err != nil {
+		t.Fatalf("renderMarkdown returned error: %v", err)
+	}
+
+	output := string(rendered)
+	for _, expected := range []string{"<h1>Hello</h1>", "<strong>bold</strong>"} {
+		if !strings.Contains(output, expected) {
+			t.Errorf("rendered Markdown does not contain %q: %s", expected, output)
+		}
+	}
+}
+
+func TestRenderMarkdownEscapesRawHTML(t *testing.T) {
+	rendered, err := renderMarkdown("<script>alert('xss')</script>")
+	if err != nil {
+		t.Fatalf("renderMarkdown returned error: %v", err)
+	}
+
+	if strings.Contains(string(rendered), "<script>") {
+		t.Fatal("rendered Markdown contains executable raw HTML")
+	}
+}
+
+func TestLoadContentRendersMarkdownPosts(t *testing.T) {
+	content, err := loadContent("content.yaml")
+	if err != nil {
+		t.Fatalf("loadContent returned error: %v", err)
+	}
+	if len(content.Blog.Posts) == 0 {
+		t.Fatal("expected at least one blog post")
+	}
+	if !strings.Contains(string(content.Blog.Posts[0].HTML), "<h1>Lorem Ipsum</h1>") {
+		t.Fatalf("blog post Markdown was not rendered: %s", content.Blog.Posts[0].HTML)
+	}
+}
+
+func TestHealthHandler(t *testing.T) {
+	request := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	response := httptest.NewRecorder()
+	healthHandler(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("health endpoint returned status %d, want %d", response.Code, http.StatusOK)
+	}
+	if response.Body.String() != "ok\n" {
+		t.Fatalf("health endpoint body = %q, want %q", response.Body.String(), "ok\n")
+	}
+	if response.Header().Get("Cache-Control") != "no-store" {
+		t.Fatalf("health endpoint must not be cached")
+	}
+}

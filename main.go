@@ -1,17 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"embed"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/yuin/goldmark"
 	"gopkg.in/yaml.v3"
 )
 
@@ -26,12 +29,14 @@ type Project struct {
 }
 
 type BlogPost struct {
-	Slug    string   `yaml:"slug"`
-	Title   string   `yaml:"title"`
-	Date    string   `yaml:"date"`
-	Summary string   `yaml:"summary"`
-	Tags    []string `yaml:"tags"`
-	Body    string   `yaml:"body"`
+	Slug    string        `yaml:"slug"`
+	Title   string        `yaml:"title"`
+	Date    string        `yaml:"date"`
+	Summary string        `yaml:"summary"`
+	Tags    []string      `yaml:"tags"`
+	Source  string        `yaml:"source"`
+	Body    string        `yaml:"body"` // Inline Markdown fallback for small posts.
+	HTML    template.HTML `yaml:"-"`
 }
 
 type Experience struct {
@@ -191,6 +196,7 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Compress(5))
 	r.Mount("/static", http.FileServer(http.FS(websiteFiles)))
+	r.Get("/healthz", healthHandler)
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		data := PageData{Year: time.Now().Year(), Content: content, Page: "landing"}
 		if err := tmpl.ExecuteTemplate(w, "home.html", data); err != nil {
@@ -268,6 +274,13 @@ func main() {
 	log.Fatal(server.ListenAndServe())
 }
 
+func healthHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte("ok\n"))
+}
+
 func readOnlyRequests(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {
@@ -312,5 +325,44 @@ func loadContent(path string) (Content, error) {
 	if content.SiteName == "" {
 		return Content{}, fmt.Errorf("site_name is required")
 	}
+
+	for index := range content.Blog.Posts {
+		post := &content.Blog.Posts[index]
+		markdown := post.Body
+		if post.Source != "" {
+			sourcePath := filepath.Join(filepath.Dir(path), "blog", post.Source)
+			blogDir, err := filepath.Abs(filepath.Join(filepath.Dir(path), "blog"))
+			if err != nil {
+				return Content{}, fmt.Errorf("resolve blog directory: %w", err)
+			}
+			resolvedSource, err := filepath.Abs(sourcePath)
+			if err != nil {
+				return Content{}, fmt.Errorf("resolve blog post %q: %w", post.Source, err)
+			}
+			relativeSource, err := filepath.Rel(blogDir, resolvedSource)
+			if err != nil || relativeSource == ".." || strings.HasPrefix(relativeSource, ".."+string(filepath.Separator)) {
+				return Content{}, fmt.Errorf("blog post source escapes blog directory: %q", post.Source)
+			}
+			contents, err := os.ReadFile(resolvedSource)
+			if err != nil {
+				return Content{}, fmt.Errorf("read blog post %q: %w", post.Source, err)
+			}
+			markdown = string(contents)
+		}
+
+		rendered, err := renderMarkdown(markdown)
+		if err != nil {
+			return Content{}, fmt.Errorf("render blog post %q: %w", post.Slug, err)
+		}
+		post.HTML = template.HTML(rendered)
+	}
 	return content, nil
+}
+
+func renderMarkdown(markdown string) ([]byte, error) {
+	var rendered bytes.Buffer
+	if err := goldmark.New().Convert([]byte(markdown), &rendered); err != nil {
+		return nil, err
+	}
+	return rendered.Bytes(), nil
 }

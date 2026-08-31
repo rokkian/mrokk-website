@@ -28,9 +28,8 @@
     <article class="post-page">
       <a class="back-link" href="/blog">← All posts</a>
       <p class="eyebrow">{{.Post.Date}}</p>
-      <h1>{{.Post.Title}}</h1>
       <div class="tags">{{range .Post.Tags}}<span>{{.}}</span>{{end}}</div>
-      <div class="post-body">{{.Post.Body}}</div>
+      <div class="post-body">{{.Post.HTML}}</div>
     </article>
   </main>
 
