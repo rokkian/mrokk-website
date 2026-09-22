@@ -141,6 +141,9 @@ languages:
   - name: English
     proficiency: Professional working proficiency
     duolingo_score: 130
+  - name: Italian
+    proficiency: Native
+  
 
 skills:
   - Python

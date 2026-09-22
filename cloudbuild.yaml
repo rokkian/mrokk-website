@@ -1,0 +1,95 @@
+steps:
+  # ---------------------------------------------------------------------------
+  # Step 1: Automated testing (CI validation)
+  # Runs the Go test suite. If tests fail, the build stops before building/deploying.
+  # ---------------------------------------------------------------------------
+  - name: 'golang:1.27-bookworm'
+    id: 'test'
+    entrypoint: 'go'
+    args: ['test', '-v', './...']
+
+  # ---------------------------------------------------------------------------
+  # Step 2: Pull previous image for Docker layer caching (best-effort)
+  # Speeds up container builds; ignores errors if the image doesn't exist yet.
+  # ---------------------------------------------------------------------------
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'pull-cache'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        docker pull ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/${_IMAGE_NAME}:latest || true
+
+  # ---------------------------------------------------------------------------
+  # Step 3: Build container image
+  # Tags with git commit short SHA (for immutable deployment) and latest.
+  # ---------------------------------------------------------------------------
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/${_IMAGE_NAME}:${SHORT_SHA}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/${_IMAGE_NAME}:latest'
+      - '--cache-from'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/${_IMAGE_NAME}:latest'
+      - '.'
+
+  # ---------------------------------------------------------------------------
+  # Step 4: Push images to Google Artifact Registry
+  # ---------------------------------------------------------------------------
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-sha'
+    args:
+      - 'push'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/${_IMAGE_NAME}:${SHORT_SHA}'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-latest'
+    args:
+      - 'push'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/${_IMAGE_NAME}:latest'
+
+  # ---------------------------------------------------------------------------
+  # Step 5: Deploy the new revision to Cloud Run
+  # Deploys the immutable $SHORT_SHA image tag with autoscaling and resource limits.
+  # ---------------------------------------------------------------------------
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - '${_SERVICE_NAME}'
+      - '--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/${_IMAGE_NAME}:${SHORT_SHA}'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--min-instances=${_MIN_INSTANCES}'
+      - '--max-instances=${_MAX_INSTANCES}'
+      - '--cpu=${_CPU}'
+      - '--memory=${_MEMORY}'
+      - '--port=8080'
+
+# Store images in Artifact Registry metadata for provenance and vulnerability scanning
+images:
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/${_IMAGE_NAME}:${SHORT_SHA}'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/${_IMAGE_NAME}:latest'
+
+# Substitution variables with default values matching the repository configuration.
+# These can be customized or overridden in the Cloud Build trigger settings.
+substitutions:
+  _REGION: 'europe-west1'
+  _SERVICE_NAME: 'mrokk-web'
+  _REPO_NAME: 'personal-site'
+  _IMAGE_NAME: 'mrokk-web'
+  _MIN_INSTANCES: '0'
+  _MAX_INSTANCES: '1'
+  _CPU: '1'
+  _MEMORY: '256Mi'
+
+options:
+  logging: 'CLOUD_LOGGING_ONLY'
+
+timeout: '1200s'
