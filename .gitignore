@@ -1,1 +1,6 @@
 justfile
+
+# Local agent skills, hooks, and design-workflow artifacts
+/.agents/skills/
+/.codex/
+/.impeccable/

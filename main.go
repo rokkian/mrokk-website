@@ -3,9 +3,12 @@ package main
 import (
 	"bytes"
 	"embed"
+	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"html/template"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -65,6 +68,7 @@ type Certification struct {
 
 type Content struct {
 	SiteName        string               `yaml:"site_name"`
+	BaseURL         string               `yaml:"base_url"`
 	MetaDescription string               `yaml:"meta_description"`
 	Navigation      Navigation           `yaml:"navigation"`
 	Hero            Hero                 `yaml:"hero"`
@@ -79,6 +83,44 @@ type Content struct {
 	Contact         Contact              `yaml:"contact"`
 	Footer          Footer               `yaml:"footer"`
 	Theme           Theme                `yaml:"theme"`
+}
+
+type RSSFeed struct {
+	XMLName      xml.Name   `xml:"rss"`
+	Version      string     `xml:"version,attr"`
+	XMLNSAtom    string     `xml:"xmlns:atom,attr"`
+	XMLNSContent string     `xml:"xmlns:content,attr"`
+	Channel      RSSChannel `xml:"channel"`
+}
+
+type RSSChannel struct {
+	Title         string    `xml:"title"`
+	Link          string    `xml:"link"`
+	Description   string    `xml:"description"`
+	Language      string    `xml:"language,omitempty"`
+	LastBuildDate string    `xml:"lastBuildDate"`
+	AtomLink      AtomLink  `xml:"atom:link"`
+	Items         []RSSItem `xml:"item"`
+}
+
+type AtomLink struct {
+	Href string `xml:"href,attr"`
+	Rel  string `xml:"rel,attr"`
+	Type string `xml:"type,attr"`
+}
+
+type RSSItem struct {
+	Title       string     `xml:"title"`
+	Link        string     `xml:"link"`
+	GUID        string     `xml:"guid"`
+	PubDate     string     `xml:"pubDate"`
+	Description string     `xml:"description"`
+	Content     *CDATAText `xml:"content:encoded,omitempty"`
+	Categories  []string   `xml:"category,omitempty"`
+}
+
+type CDATAText struct {
+	Value string `xml:",cdata"`
 }
 
 type Navigation struct {
@@ -175,17 +217,91 @@ type PageData struct {
 	Post    *BlogPost
 }
 
-func main() {
-	tmpl := template.Must(template.New("index.html").Funcs(template.FuncMap{
+func parseTemplates() *template.Template {
+	return template.Must(template.New("index.html").Funcs(template.FuncMap{
 		"addOne":    func(number int) int { return number + 1 },
 		"hasPrefix": func(value, prefix string) bool { return strings.HasPrefix(value, prefix) },
 	}).ParseFS(websiteFiles, "templates/*.html"))
+}
 
-	content, err := loadContent("content.yaml")
-	if err != nil {
-		log.Fatalf("load content.yaml: %v", err)
+var dateLayouts = []string{
+	"January 2006",
+	"2006-01-02",
+	"02 Jan 2006",
+	time.RFC3339,
+	time.RFC822,
+	time.RFC1123,
+	time.RFC1123Z,
+}
+
+func parsePostDate(dateStr string) time.Time {
+	clean := strings.TrimSpace(dateStr)
+	for _, layout := range dateLayouts {
+		if t, err := time.Parse(layout, clean); err == nil {
+			return t
+		}
+	}
+	return time.Now().UTC()
+}
+
+func generateRSSFeed(content Content) ([]byte, error) {
+	baseURL := strings.TrimRight(content.BaseURL, "/")
+	if baseURL == "" {
+		baseURL = "https://mrokk.com"
 	}
 
+	channelTitle := content.SiteName + " — Blog"
+	channelLink := baseURL + "/blog"
+	feedURL := baseURL + "/blog/feed.xml"
+
+	items := make([]RSSItem, 0, len(content.Blog.Posts))
+	for _, post := range content.Blog.Posts {
+		postURL := baseURL + "/blog/" + post.Slug
+		pubDate := parsePostDate(post.Date).Format(time.RFC1123Z)
+
+		var encodedContent *CDATAText
+		if post.HTML != "" {
+			encodedContent = &CDATAText{Value: string(post.HTML)}
+		}
+
+		items = append(items, RSSItem{
+			Title:       post.Title,
+			Link:        postURL,
+			GUID:        postURL,
+			PubDate:     pubDate,
+			Description: post.Summary,
+			Content:     encodedContent,
+			Categories:  post.Tags,
+		})
+	}
+
+	feed := RSSFeed{
+		Version:      "2.0",
+		XMLNSAtom:    "http://www.w3.org/2005/Atom",
+		XMLNSContent: "http://purl.org/rss/1.0/modules/content/",
+		Channel: RSSChannel{
+			Title:         channelTitle,
+			Link:          channelLink,
+			Description:   content.Blog.Intro,
+			Language:      "en",
+			LastBuildDate: time.Now().UTC().Format(time.RFC1123Z),
+			AtomLink: AtomLink{
+				Href: feedURL,
+				Rel:  "self",
+				Type: "application/rss+xml",
+			},
+			Items: items,
+		},
+	}
+
+	output, err := xml.MarshalIndent(feed, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	return append([]byte(xml.Header), output...), nil
+}
+
+func setupRouter(content Content, tmpl *template.Template, feedXML []byte) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.Throttle(100))
 	r.Use(readOnlyRequests)
@@ -197,7 +313,24 @@ func main() {
 	r.Use(middleware.Compress(5))
 	r.Mount("/static", http.FileServer(http.FS(websiteFiles)))
 	r.Get("/healthz", healthHandler)
+
+	feedHandler := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(feedXML)
+	}
+	r.Get("/blog/feed.xml", feedHandler)
+	r.Get("/feed.xml", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/blog/feed.xml", http.StatusMovedPermanently)
+	})
+	r.Get("/ifconfig", ifconfigHandler)
+	r.Get("/ip", ifconfigHandler)
+
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		if tmpl == nil {
+			return
+		}
 		data := PageData{Year: time.Now().Year(), Content: content, Page: "landing"}
 		if err := tmpl.ExecuteTemplate(w, "home.html", data); err != nil {
 			log.Printf("render homepage: %v", err)
@@ -205,6 +338,9 @@ func main() {
 		}
 	})
 	r.Get("/me", func(w http.ResponseWriter, r *http.Request) {
+		if tmpl == nil {
+			return
+		}
 		data := PageData{Year: time.Now().Year(), Content: content, Page: "resume"}
 		if err := tmpl.ExecuteTemplate(w, "index.html", data); err != nil {
 			log.Printf("render resume page: %v", err)
@@ -212,6 +348,9 @@ func main() {
 		}
 	})
 	r.Get("/contacts", func(w http.ResponseWriter, r *http.Request) {
+		if tmpl == nil {
+			return
+		}
 		data := PageData{Year: time.Now().Year(), Content: content, Page: "contacts"}
 		if err := tmpl.ExecuteTemplate(w, "contacts.html", data); err != nil {
 			log.Printf("render contacts page: %v", err)
@@ -219,6 +358,9 @@ func main() {
 		}
 	})
 	rickrollHandler := func(w http.ResponseWriter, r *http.Request) {
+		if tmpl == nil {
+			return
+		}
 		data := PageData{Year: time.Now().Year(), Content: content, Page: "mattrolled"}
 		if err := tmpl.ExecuteTemplate(w, "mattrolled.html", data); err != nil {
 			log.Printf("render rickrolled page: %v", err)
@@ -229,6 +371,9 @@ func main() {
 	r.Get("/mattrolled", rickrollHandler)
 
 	r.Get("/blog", func(w http.ResponseWriter, r *http.Request) {
+		if tmpl == nil {
+			return
+		}
 		data := PageData{Year: time.Now().Year(), Content: content, Page: "blog"}
 		if err := tmpl.ExecuteTemplate(w, "blog.html", data); err != nil {
 			log.Printf("render blog page: %v", err)
@@ -236,6 +381,9 @@ func main() {
 		}
 	})
 	r.Get("/blog/{slug}", func(w http.ResponseWriter, r *http.Request) {
+		if tmpl == nil {
+			return
+		}
 		slug := chi.URLParam(r, "slug")
 		var post *BlogPost
 		for index := range content.Blog.Posts {
@@ -255,6 +403,24 @@ func main() {
 			http.Error(w, "Something went wrong", http.StatusInternalServerError)
 		}
 	})
+
+	return r
+}
+
+func main() {
+	tmpl := parseTemplates()
+
+	content, err := loadContent("content.yaml")
+	if err != nil {
+		log.Fatalf("load content.yaml: %v", err)
+	}
+
+	feedXML, err := generateRSSFeed(content)
+	if err != nil {
+		log.Fatalf("generate RSS feed: %v", err)
+	}
+
+	r := setupRouter(content, tmpl, feedXML)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -279,6 +445,66 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte("ok\n"))
+}
+
+func getClientIP(r *http.Request) string {
+	// 1. Cloudflare authoritative connecting IP
+	if cfIP := strings.TrimSpace(r.Header.Get("CF-Connecting-IP")); cfIP != "" {
+		if net.ParseIP(cfIP) != nil {
+			return cfIP
+		}
+	}
+
+	// 2. Standard X-Forwarded-For header (leftmost IP is the original client)
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		parts := strings.Split(xff, ",")
+		if len(parts) > 0 {
+			first := strings.TrimSpace(parts[0])
+			if net.ParseIP(first) != nil {
+				return first
+			}
+		}
+	}
+
+	// 3. X-Real-IP header
+	if realIP := strings.TrimSpace(r.Header.Get("X-Real-IP")); realIP != "" {
+		if net.ParseIP(realIP) != nil {
+			return realIP
+		}
+	}
+
+	// 4. Fallback to RemoteAddr (strip port if present)
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err == nil {
+		if net.ParseIP(host) != nil {
+			return host
+		}
+	}
+	cleanRemote := strings.TrimSpace(r.RemoteAddr)
+	if net.ParseIP(cleanRemote) != nil {
+		return cleanRemote
+	}
+
+	return r.RemoteAddr
+}
+
+func ifconfigHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, private")
+	w.Header().Set("Pragma", "no-cache")
+
+	ip := getClientIP(r)
+
+	// Content negotiation: return JSON if Accept header asks for application/json or format=json query parameter
+	accept := r.Header.Get("Accept")
+	if strings.Contains(accept, "application/json") || r.URL.Query().Get("format") == "json" {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		_ = json.NewEncoder(w).Encode(map[string]string{"ip": ip})
+		return
+	}
+
+	// Default plain text with newline (ifconfig.me style for CLI / curl)
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	_, _ = fmt.Fprintf(w, "%s\n", ip)
 }
 
 func readOnlyRequests(next http.Handler) http.Handler {

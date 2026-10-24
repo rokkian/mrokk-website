@@ -18,6 +18,8 @@ The site is organized into a landing page, a one-page CV, and a separate blog:
 - `/me` — one-page CV and portfolio
 - `/blog` — blog index
 - `/blog/{slug}` — individual blog post
+- `/blog/feed.xml` — RSS 2.0 / Atom feed
+- `/ifconfig` (or `/ip`) — caller IP network echo (`text/plain` or `application/json`)
 - `/contacts` — public contact links
 - `/mattrolled` — event NFC joke page with configurable video and contact links
 - `/healthz` — lightweight health check returning `200 OK`
