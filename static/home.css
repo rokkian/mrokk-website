@@ -1,0 +1,58 @@
+.garden-main { position: relative; isolation: isolate; flex: 1; min-height: 650px; display: flex; align-items: flex-start; padding: var(--content-start) 0 100px; }
+.garden-scene { position: absolute; z-index: -1; pointer-events: none; width: min(1000px, 80vw); aspect-ratio: 1920 / 1289; right: -42px; bottom: -15px; }
+.garden-art, .rain-field { position: absolute; display: block; inset: 0; width: 100%; height: 100%; }
+.garden-art { object-fit: contain; }
+.introduction { position: relative; width: min(530px, 48%); }
+.profession { font-size: clamp(23px, 2.5vw, 30px); font-weight: 500; line-height: 1.35; letter-spacing: -.025em; margin: 17px 0 0; }
+.introduction-copy { max-width: 470px; color: var(--soft-cloud); font-size: 18px; font-weight: 500; line-height: 1.75; margin: 24px 0 0; text-wrap: pretty; }
+.introduction-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 32px; }
+.destination { display: inline-flex; align-items: center; justify-content: center; gap: 21px; min-height: 58px; padding: 15px 22px; border-radius: 40px; font-size: 16px; font-weight: 600; line-height: 1.4; transition: background-color 160ms ease-out, color 160ms ease-out; }
+.destination svg { width: 22px; height: 22px; stroke: currentColor; stroke-width: 1.35; }
+.destination-primary { background: var(--cloud); color: var(--control-ink); }
+.destination-secondary { border: 1px solid var(--stem); background: var(--garden); }
+.destination-primary:hover { background: var(--rain-blue); color: var(--garden); }
+.destination-secondary:hover { background: var(--rain-coral); color: var(--garden); border-color: var(--rain-coral); }
+.experience-note { max-width: 300px; color: var(--soft-cloud); margin: 31px 0 0; font-size: 14px; font-weight: 500; line-height: 1.8; text-wrap: pretty; }
+.motion-control { position: absolute; bottom: 22px; right: 6px; display: inline-flex; gap: 8px; align-items: center; min-height: 44px; padding: 10px 12px; border: 0; border-radius: 24px; background: var(--garden); color: var(--soft-cloud); font-size: 12px; font-weight: 500; }
+.motion-control:hover { color: var(--cloud); }
+.motion-control svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.4; }
+.motion-control[aria-pressed="true"] .pause-icon { display: none; }
+.motion-control[aria-pressed="true"] .play-icon { display: block; }
+
+
+@media (min-width: 1500px) {
+  .garden-main { min-height: 740px; }
+  .garden-scene { width: 1130px; }
+}
+
+@media (max-width: 1050px) {
+  .garden-main { min-height: 730px; }
+  .introduction { width: min(520px, 64%); }
+  .garden-scene { width: 800px; right: -45px; bottom: -15px; }
+  .introduction-copy { max-width: 440px; }
+  .experience-note { max-width: 420px; }
+}
+
+@media (max-width: 700px) {
+  .garden-main { min-height: auto; display: block; padding: var(--content-start) 0 0; }
+  .introduction { width: 100%; }
+  h1 { font-size: clamp(64px, 17vw, 88px); }
+  .profession { font-size: 23px; margin-top: 14px; }
+  .introduction-copy { font-size: 16px; line-height: 1.8; margin-top: 23px; max-width: 460px; }
+  .introduction-actions { flex-wrap: nowrap; gap: 11px; margin-top: 27px; }
+  .destination { gap: 12px; min-height: 54px; padding: 14px 18px; font-size: 14px; }
+  .destination svg { width: 19px; height: 19px; }
+  .experience-note { margin-top: 25px; font-size: 12px; max-width: 420px; }
+  .garden-scene { position: relative; width: calc(100% + 48px); margin: -18px -24px -12px; right: auto; bottom: auto; }
+  .introduction { z-index: 1; }
+  .garden-main { display: flex; flex-direction: column; }
+  .garden-scene { order: 1; }
+  .motion-control { position: relative; bottom: auto; right: auto; z-index: 2; order: 2; align-self: flex-end; margin: 0 -10px 7px 0; }
+}
+
+@media (max-width: 370px) {
+  .introduction-actions { flex-direction: column; align-items: stretch; }
+  .destination { justify-content: space-between; }
+  .profession { font-size: 21px; }
+  .garden-scene { width: calc(100% + 40px); margin-left: -20px; margin-right: -20px; }
+}

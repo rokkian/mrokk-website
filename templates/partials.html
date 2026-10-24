@@ -1,7 +1,42 @@
-{{define "site-footer"}}
-<footer>
-  <span>© {{.Year}} {{.Content.SiteName}}</span>
-  <button class="email-copy" type="button" data-email="{{.Content.Contact.Email}}" aria-live="polite">{{.Content.Contact.Email}}</button>
-  <span>{{.Content.Footer.Tagline}}</span>
-</footer>
+{{define "site-icons"}}
+  <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="/static/images/favicon-48x48.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/images/apple-touch-icon.png">
 {{end}}
+
+{{define "site-assets"}}
+  {{template "site-icons" .}}
+  <link rel="canonical" href="{{.CanonicalURL}}">
+  <link rel="alternate" hreflang="en" href="{{.EnglishURL}}">
+  <link rel="alternate" hreflang="it" href="{{.ItalianURL}}">
+  <link rel="alternate" hreflang="x-default" href="{{.EnglishURL}}">
+  <link rel="preload" href="/static/fonts/quicksand-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/static/site.css">
+  <script src="/static/theme.js"></script>
+{{end}}
+
+{{define "site-header"}}
+    <header class="garden-header">
+      <a class="wordmark" href="{{.URL "/"}}" aria-label="{{.Content.UI.home_label}}">{{.Content.SiteName}}</a>
+      <nav class="garden-nav" aria-label="{{.Content.UI.primary_navigation}}">
+        <a href="{{.URL "/me"}}"{{if eq .Page "resume"}} aria-current="page"{{end}}>CV</a>
+        <a href="{{.URL "/blog"}}"{{if or (eq .Page "blog") (eq .Page "post")}} aria-current="page"{{end}}>{{.Content.Navigation.Blog}}</a>
+        <a href="{{.URL "/contacts"}}"{{if eq .Page "contacts"}} aria-current="page"{{end}}>{{.Content.Navigation.Contact}}</a>
+        <a class="language-switch" href="{{.LanguageURL}}" lang="{{.OtherLanguage}}" hreflang="{{.OtherLanguage}}" aria-label="{{.LanguageTitle}}" title="{{.LanguageTitle}}">{{.LanguageLabel}}</a>
+        <button class="theme-control" type="button" aria-label="{{.Content.Theme.LightLabel}}" aria-pressed="true" data-light-label="{{.Content.Theme.LightLabel}}" data-dark-label="{{.Content.Theme.DarkLabel}}" hidden>
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 14.2A8.6 8.6 0 0 1 9.8 4a8.6 8.6 0 1 0 10.2 10.2Z"/></svg>
+        </button>
+      </nav>
+    </header>
+{{end}}
+
+{{define "site-footer"}}
+    <footer class="garden-footer">
+      <span>© {{.Year}} {{.Content.SiteName}}</span>
+      <a href="mailto:{{.Content.Contact.Email}}">{{.Content.Contact.Email}}<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></a>
+    </footer>
+{{end}}
+
+{{define "arrow-up-right"}}<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg>{{end}}

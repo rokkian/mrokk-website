@@ -13,6 +13,7 @@ FROM gcr.io/distroless/static-debian12:nonroot
 WORKDIR /app
 COPY --from=build /out/gowebsite ./gowebsite
 COPY content.yaml ./content.yaml
+COPY content.it.yaml ./content.it.yaml
 COPY blog ./blog
 
 EXPOSE 8080

@@ -1,41 +1,32 @@
 {{define "blog-post.html"}}
 <!doctype html>
-<html lang="en">
+<html lang="{{.Language}}" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="{{.Post.Summary}}">
-  <meta name="theme-color" content="#f4f5ef">
+  <meta name="theme-color" content="#263e37">
   <title>{{.Content.SiteName}} — {{.Post.Title}}</title>
-  <link rel="icon" type="image/png" href="/static/images/favicon.png">
-  <link rel="alternate" type="application/rss+xml" title="{{.Content.SiteName}} RSS Feed" href="/blog/feed.xml">
+  {{template "site-assets" .}}
+  <link rel="alternate" type="application/rss+xml" title="{{.Content.SiteName}} — RSS" href="{{.URL "/blog/feed.xml"}}">
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-  <header class="site-header">
-    <a class="logo" href="/">{{.Content.SiteName}}<span>.</span></a>
-    <nav aria-label="Primary navigation">
-      <a href="/">Home</a>
-      <a href="/me">CV</a>
-      <a href="/blog">{{.Content.Navigation.Blog}}</a>
-      <a href="/contacts">Contacts</a>
-      <button class="theme-toggle" type="button" aria-label="{{.Content.Theme.DarkLabel}}" data-light-label="{{.Content.Theme.LightLabel}}" data-dark-label="{{.Content.Theme.DarkLabel}}" aria-pressed="false">
-        <span class="sun" aria-hidden="true">☼</span><span class="moon" aria-hidden="true">☾</span>
-      </button>
-    </nav>
-  </header>
+  <a class="skip-link" href="#main-content">{{.Content.UI.skip_content}}</a>
+  <div class="site-page">
+  {{template "site-header" .}}
 
-  <main class="inner-page">
+  <main tabindex="-1" id="main-content" class="inner-page">
     <article class="post-page">
-      <a class="back-link" href="/blog">← All posts</a>
-      <p class="eyebrow">{{.Post.Date}}</p>
-      <div class="tags">{{range .Post.Tags}}<span>{{.}}</span>{{end}}</div>
+      <div class="post-toolbar"><a class="back-link" href="{{.URL "/blog"}}"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg>{{.Content.UI.all_posts}}</a>
+      <div class="post-meta"><p>{{.Date .Post.Date}}</p><div class="tags">{{range .Post.Tags}}<span>{{.}}</span>{{end}}</div></div>
+      </div>
       <div class="post-body">{{.Post.HTML}}</div>
     </article>
   </main>
 
   {{template "site-footer" .}}
-  <script src="/static/theme.js"></script>
+  </div>
 </body>
 </html>
 {{end}}

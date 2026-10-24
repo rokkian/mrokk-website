@@ -1,43 +1,44 @@
 {{define "home.html"}}
 <!doctype html>
-<html lang="en">
+<html lang="{{.Language}}" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="{{.Content.MetaDescription}}">
-  <meta name="theme-color" content="#f4f5ef">
-  <title>{{.Content.SiteName}} — {{.Content.Hero.Title}}</title>
-  <link rel="icon" type="image/png" href="/static/images/favicon.png">
-  <link rel="alternate" type="application/rss+xml" title="{{.Content.SiteName}} RSS Feed" href="/blog/feed.xml">
-  <link rel="stylesheet" href="/static/styles.css">
+  <meta name="description" content="{{.Content.Homepage.Intro}}">
+  <meta name="theme-color" content="#263e37">
+  <title>{{.Content.SiteName}} — {{.Content.Homepage.Role}}</title>
+  {{template "site-assets" .}}
+  <link rel="alternate" type="application/rss+xml" title="{{.Content.SiteName}} — RSS" href="{{.URL "/blog/feed.xml"}}">
+  <link rel="stylesheet" href="/static/home.css">
+  <script src="/static/garden.js"></script>
 </head>
 <body>
-  <header class="site-header">
-    <a class="logo" href="/">{{.Content.SiteName}}<span>.</span></a>
-    <nav aria-label="Primary navigation">
-      <a href="/me">CV</a>
-      <a href="/blog">{{.Content.Navigation.Blog}}</a>
-      <a href="/contacts">Contacts</a>
-      <button class="theme-toggle" type="button" aria-label="{{.Content.Theme.DarkLabel}}" data-light-label="{{.Content.Theme.LightLabel}}" data-dark-label="{{.Content.Theme.DarkLabel}}" aria-pressed="false">
-        <span class="sun" aria-hidden="true">☼</span><span class="moon" aria-hidden="true">☾</span>
-      </button>
-    </nav>
-  </header>
-
-  <main class="landing-page">
-    <section class="landing-intro">
-      <p class="eyebrow">{{.Content.Hero.Eyebrow}}</p>
-      <h1>{{.Content.Hero.Title}}</h1>
-      <p class="intro">{{.Content.Hero.Intro}}</p>
-      <div class="landing-actions">
-        <a class="button" href="/me">View my CV <span>↗</span></a>
-        <a class="text-link" href="/blog">Read the blog <span>↗</span></a>
+  <a class="skip-link" href="#introduction">{{.Content.UI.skip_intro}}</a>
+  <div class="site-page garden-page">
+    {{template "site-header" .}}
+    <main tabindex="-1" class="garden-main" id="introduction">
+      <div class="garden-scene" aria-hidden="true">
+        <img class="garden-art" src="/static/images/gravity-garden.webp" width="1920" height="1289" alt="" fetchpriority="high" decoding="async">
+        <canvas class="rain-field"></canvas>
       </div>
-    </section>
-  </main>
-
-  {{template "site-footer" .}}
-  <script src="/static/theme.js"></script>
+      <section class="introduction" aria-labelledby="name">
+        <h1 id="name">{{.Content.Homepage.Name}}</h1>
+        <p class="profession">{{.Content.Homepage.Role}}</p>
+        <p class="introduction-copy">{{.Content.Homepage.Intro}}</p>
+        <div class="introduction-actions">
+          <a class="destination destination-primary" href="{{.URL "/me"}}" data-rain="left"><span>{{.Content.Homepage.CVLabel}}</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+          <a class="destination destination-secondary" href="{{.URL "/contacts"}}" data-rain="right"><span>{{.Content.Homepage.ContactLabel}}</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+        </div>
+        <p class="experience-note">{{.Content.Homepage.Evidence}}</p>
+      </section>
+      <button class="motion-control" type="button" aria-pressed="false" aria-label="{{.Content.UI.pause_rain}}" data-pause-label="{{.Content.UI.pause_rain}}" data-resume-label="{{.Content.UI.resume_rain}}" hidden>
+        <svg class="pause-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 6v12M15 6v12"/></svg>
+        <svg class="play-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9 6 9 6-9 6Z"/></svg>
+        <span>{{.Content.UI.pause_rain}}</span>
+      </button>
+    </main>
+    {{template "site-footer" .}}
+  </div>
 </body>
 </html>
 {{end}}

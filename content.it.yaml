@@ -1,0 +1,226 @@
+site_name: mrokk
+language: it
+meta_description: Il sito personale di Matteo, ingegnere cloud e dati.
+
+homepage:
+  name: Matteo
+  role: Ingegnere cloud e dati
+  intro: Realizzo infrastrutture cloud e piattaforme dati con Google Cloud, Terraform e Python.
+  evidence: Esperienza in analisi dei dati per la pubblica amministrazione, infrastrutture per le telecomunicazioni e piattaforme dati per l'IA.
+  cv_label: Guarda il CV
+  contact_label: Contattami
+
+navigation:
+  about: Profilo
+  experience: Esperienza
+  work: Progetti
+  blog: Blog
+  contact: Contatti
+
+hero:
+  eyebrow: Ciao, sono
+  title: Matteo.
+  intro: Mi occupo di ingegneria cloud e dei dati con Google Cloud, Terraform, Python e piattaforme dati moderne. Mi piace anche realizzare progetti per il web curati nei dettagli.
+  cta: Scopri i miei progetti
+  image: /static/images/ista_enhanced.jpeg
+  image_alt: Ritratto di Matteo
+
+about:
+  label: Profilo
+  title: Ingegnere cloud e dati, sempre pronto a imparare.
+  text: Progetto e realizzo infrastrutture cloud e piattaforme dati, con particolare attenzione a Google Cloud, Terraform, BigQuery, Dataform, Dataplex, Python e PySpark. Ho lavorato su analisi dei dati per la pubblica amministrazione, infrastrutture per le telecomunicazioni, previsioni in ambito energetico, pagamenti fintech, machine learning e piattaforme dati per l'IA. Ho inoltre conseguito le certificazioni Google Cloud Professional Cloud Architect e Professional Machine Learning Engineer.
+
+experience:
+  label: Esperienza
+  intro: I ruoli e le realtà che hanno formato il mio percorso.
+  entries:
+    - period: Giugno 2024 — Presente
+      role: Ingegnere cloud e dati
+      company: Datwave
+      location: Milano/Remoto
+      description: |
+        Attività di ingegneria cloud, ingegneria dei dati e sviluppo di piattaforme per l'IA:
+        - Progettazione di un'architettura dati per l'analisi con BigQuery, Dataform e Dataplex per un ente pubblico regionale italiano.
+        - Sviluppo di architetture cloud e infrastrutture come codice con Terraform.
+        - Sviluppo e provisioning di infrastrutture Google Cloud e moduli Terraform personalizzati per un'azienda svizzera di telecomunicazioni.
+        - Realizzazione di una prova di fattibilità per estrarre metadati di tracciabilità dei dati da codice legacy COBOL e SAS con Google Cloud, Python, LangChain e Podman.
+        - Progettazione di una piattaforma dati per fornire a chatbot di assistenza clienti basati sull'IA dati contestuali da sistemi esterni batch e in tempo reale, con Google Cloud, Python, BigQuery e Terraform.
+    - period: Maggio 2022 — Giugno 2024
+      role: Ingegnere cloud e dati junior
+      company: BIP
+      location: Bologna/Remoto
+      description: |
+        Progetti sui dati per la gestione dell'energia e i pagamenti fintech:
+        - Manutenzione di flussi dati per il mercato dell'energia e le attività aziendali con Python e PySpark su Cloudera e Azure Databricks.
+        - Preparazione e analisi di dati sulle materie prime energetiche con Python, Pandas e Polars.
+        - Manutenzione e sviluppo di report e prodotti di business intelligence con notebook Python e Microsoft Excel.
+        - Manutenzione e sviluppo di flussi dati fintech con PySpark, distribuiti ed eseguiti tramite Tuber e Airflow su cluster Kubernetes e Spark on-premise.
+    - period: Ottobre 2021 — Aprile 2022
+      role: Sviluppatore software e analista dati junior
+      company: PLANNET S.r.l.
+      location: Reggio Emilia
+      description: |
+        Progettazione e sviluppo di un sistema di machine learning per prevedere serie temporali della produzione industriale, realizzazione di pipeline di elaborazione dei dati per la preparazione dei modelli e creazione e manutenzione di report Power BI sui dati storici di produzione.
+    - period: Giugno 2021 — Luglio 2021
+      role: Analista di contenuti
+      company: Majorel
+      location: Cracovia/Remoto
+      description: Analisi di siti web per verificarne la conformità alle norme di Google Search Ads.
+    - period: Maggio 2019 — Ottobre 2019
+      role: Stagista amministratore IT
+      company: Stars & Cows
+      location: Fiorano Modenese
+      description: Gestione e manutenzione delle infrastrutture e delle risorse informatiche dell'ufficio, configurazione di sistemi e integrazioni software e contributi allo sviluppo web.
+
+certifications:
+  label: Certificazioni
+  intro: Certificazioni professionali e formazione continua.
+  certificates:
+    - name: Professional Cloud Architect
+      icon: /static/images/cert_cloud_arch.png
+      issuer: Google Cloud
+      issued: Gennaio 2026
+      link: https://www.credly.com/badges/794de2e9-45f6-4d82-bb83-3c370da8fe8a/public_url
+    - name: Professional Machine Learning Engineer
+      icon: /static/images/cert_ml_eng.png
+      issuer: Google Cloud
+      issued: Ottobre 2025
+      link: https://www.credly.com/badges/f927a9e0-250e-4deb-afb9-667c1b2dce52/public_url
+    - name: Professional Cloud Database Engineer
+      icon: /static/images/cert_data_admin.png
+      issuer: Google Cloud
+      issued: Aprile 2025
+      link: https://www.credly.com/badges/a232efa3-cf96-4a45-a883-9a2648451435
+    - name: Professional Data Engineer
+      icon: /static/images/cert_data_eng.png
+      issuer: Google Cloud
+      issued: Aprile 2024
+      link: https://www.credly.com/badges/fd6fc288-4976-43b9-bf95-ee3634a28e0f
+
+work:
+  label: Progetti selezionati
+  intro: Progetti ed esplorazioni tecniche.
+  projects:
+    - name: DSP — Riconoscimento delle caratteristiche dei suoni
+      description: Progetto Matlab per calcolare parametri caratteristici di file audio WAV e confrontare suoni diversi. Le caratteristiche includono tempo di attacco, attraversamenti dello zero, brillantezza, irregolarità dello spettro e componenti spettrali pari e dispari nei domini del tempo e della frequenza.
+      tags: [Matlab, Elaborazione digitale dei segnali]
+      link: '#contact'
+    - name: Esplorazioni di piattaforme cloud e dati
+      description: Uno spazio per documentare esperimenti con Google Cloud, Terraform, Go, Kubernetes, ingegneria dei dati e machine learning.
+      tags: [Google Cloud, Terraform, Go]
+      link: '#contact'
+
+education:
+  label: Formazione
+  intro: L'inizio del mio percorso
+  degrees:
+    - name: Master in Cloud & Data Engineering
+      institution: Politecnico di Milano / Cefriel
+      location: Milano
+      description: |
+        Specializzazione in Cloud & Data Engineering:
+        - ingegneria dei dati moderna
+        - cloud computing
+        - machine learning
+        - DevOps
+      duration: Maggio 2022 — Maggio 2024
+      grade: 110/110
+    - name: Laurea magistrale in Ingegneria informatica
+      institution: Unimore - DIEF
+      location: Modena
+      duration: Ottobre 2019 — Giugno 2022
+      grade: 107/110
+      description: Specializzazione in ingegneria dei dati e basi di dati.
+    - name: Laurea in Ingegneria industriale
+      institution: Unimore - DISMI
+      location: Reggio Emilia
+      duration: Settembre 2016 — Dicembre 2019
+      description: Specializzazione nella gestione dell'informazione ICT.
+
+skills:
+  - Python
+  - Ingegneria dei dati
+  - Google Cloud Platform (GCP)
+  - Terraform
+  - BigQuery
+  - Dataform
+  - PySpark
+  - Pandas
+  - Polars
+  - SQL
+  - Kubernetes
+  - Airflow
+  - Machine Learning
+  - LangChain
+  - Go
+
+contact:
+  label: Scrivimi
+  title: Hai un'idea?
+  cta: Parliamone
+  email: hello@mrokk.com
+  links:
+    - name: Telegram
+      url: https://t.me/rokkia101
+      description: Scrivimi su Telegram
+    - name: LinkedIn
+      url: https://www.linkedin.com/in/mrokk/
+      description: Colleghiamoci su LinkedIn
+    - name: hello@mrokk.com
+      url: mailto:hello@mrokk.com
+      description: Mandami un'email
+
+footer:
+  tagline: Realizzato con Go/Chi e Codex
+
+theme:
+  light_label: Passa al tema chiaro
+  dark_label: Passa al tema scuro
+
+blog:
+  label: Blog
+  intro: Appunti su cloud, dati, machine learning e ciò che imparo lungo il percorso.
+  posts:
+    - slug: lorem
+      title: Lorem Ipsum
+      date: August 2026
+      summary: Articolo di esempio
+      tags: [Note]
+      source: lorem.it.md
+
+mattrolled:
+  eyebrow: Complimenti, l'hai trovata.
+  title: Sei stato Mattrollato.
+  message: Cercavi una conversazione professionale e hai trovato la mia pagina NFC segreta. Già che sei qui, restiamo in contatto.
+  video: /static/videos/Make_me_a_video_of_me_dancing.mp4
+  gif_alt: Video divertente di Matteo che balla
+  telegram: https://t.me/rokkia101
+  linkedin: https://www.linkedin.com/in/mrokk/
+
+ui:
+  home_label: Homepage di mrokk
+  primary_navigation: Navigazione principale
+  skip_intro: Vai alla presentazione
+  skip_content: Vai al contenuto
+  cv_title: CV
+  contacts_title: Contatti
+  contacts_description: I contatti pubblici di mrokk.
+  professional_profile: Profilo professionale
+  cv_sections: Sezioni del CV
+  about_work: Il mio lavoro
+  tools_skills: Strumenti e competenze
+  open_project: Apri %s
+  contact_heading: Restiamo in contatto
+  contact_intro: Puoi trovarmi su questi canali.
+  contact_channels: Canali di contatto
+  articles: Articoli
+  read_article: Leggi %s
+  subscribe_rss: Segui via RSS
+  empty_blog: Il primo articolo arriverà presto.
+  all_posts: Tutti gli articoli
+  video_fallback: Il tuo browser non supporta i video HTML.
+  back_home: Torna al sito
+  pause_rain: Ferma la pioggia
+  resume_rain: Riprendi la pioggia
+  site_error: Si è verificato un errore. Riprova tra poco.
+  not_found: Pagina non trovata.

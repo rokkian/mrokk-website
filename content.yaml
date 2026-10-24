@@ -1,6 +1,14 @@
 site_name: mrokk
 meta_description: The personal website of mrokk.
 
+homepage:
+  name: Matteo
+  role: Cloud & data engineer
+  intro: I build cloud infrastructure and data platforms with Google Cloud, Terraform and Python.
+  evidence: Experience in public-sector analytics, telecom infrastructure and AI data platforms.
+  cv_label: View my CV
+  contact_label: Contact me
+
 navigation:
   about: About
   experience: Experience
@@ -17,12 +25,12 @@ hero:
   image_alt: Portrait of mrokk
 
 about:
-  label: 01 / About
+  label: About
   title: Cloud engineer, data engineer, and lifelong learner.
   text: I design and build cloud infrastructures and data platforms, with a focus on Google Cloud, Terraform, BigQuery, Dataform, Dataplex, Python, and PySpark. My experience spans public-sector analytics, telecommunications infrastructure, energy forecasting, fintech payments, machine learning, and AI data platforms. I am also a Google Cloud Certified Professional Cloud Architect and Professional Machine Learning Engineer.
 
 experience:
-  label: 02 / Experience
+  label: Experience
   intro: The places and roles that shaped me.
   entries:
     - period: June 2024 — Present
@@ -64,28 +72,32 @@ experience:
       description: Managed and maintained office infrastructure and assets, set up office systems and software integrations, and contributed to web development.
 
 certifications:
-  label: 03 / Certifications
+  label: Certifications
   intro: Professional credentials and continued learning.
   certificates:
     - name: Professional Cloud Architect
+      icon: /static/images/cert_cloud_arch.png
       issuer: Google Cloud
       issued: January 2026
       link: https://www.credly.com/badges/794de2e9-45f6-4d82-bb83-3c370da8fe8a/public_url
     - name: Professional Machine Learning Engineer
+      icon: /static/images/cert_ml_eng.png
       issuer: Google Cloud
       issued: October 2025
       link: https://www.credly.com/badges/f927a9e0-250e-4deb-afb9-667c1b2dce52/public_url
     - name: Professional Cloud Database Engineer
+      icon: /static/images/cert_data_admin.png
       issuer: Google Cloud
       issued: April 2025
       link: https://www.credly.com/badges/a232efa3-cf96-4a45-a883-9a2648451435
     - name: Professional Data Engineer
+      icon: /static/images/cert_data_eng.png
       issuer: Google Cloud
       issued: April 2024
       link: https://www.credly.com/badges/fd6fc288-4976-43b9-bf95-ee3634a28e0f
 
 work:
-  label: 04 / Selected work
+  label: Selected work
   intro: Selected projects and technical explorations.
   projects:
     - name: DSP — Recognition of sound features
@@ -98,7 +110,7 @@ work:
       link: '#contact'
 
 education:
-  label: 05 / Education
+  label: Education
   intro: How I started in this field
   degrees:
     - name: Master in Cloud & Data Engineering
@@ -163,7 +175,7 @@ skills:
   - Go
 
 contact:
-  label: 06 / Say hello
+  label: Say hello
   title: Have an idea?
   cta: Let's talk
   email: hello@mrokk.com
@@ -186,7 +198,7 @@ theme:
   dark_label: Switch to dark mode
 
 blog:
-  label: 07 / Blog
+  label: Blog
   intro: Notes on cloud engineering, data, machine learning, and learning in public.
   posts:
     - slug: lorem
@@ -204,3 +216,31 @@ mattrolled:
   gif_alt: Funny dancing video of Matteo
   telegram: https://t.me/rokkia101
   linkedin: https://www.linkedin.com/in/mrokk/
+
+ui:
+  home_label: mrokk home
+  primary_navigation: Primary navigation
+  skip_intro: Skip to introduction
+  skip_content: Skip to content
+  cv_title: CV
+  contacts_title: Contacts
+  contacts_description: Public contact links for mrokk.
+  professional_profile: Professional profile
+  cv_sections: CV sections
+  about_work: About my work
+  tools_skills: Tools & skills
+  open_project: Open %s
+  contact_heading: Let's connect
+  contact_intro: Find me through any of these public channels.
+  contact_channels: Contact channels
+  articles: Articles
+  read_article: Read %s
+  subscribe_rss: Subscribe via RSS
+  empty_blog: The first post is on its way.
+  all_posts: All posts
+  video_fallback: Your browser does not support HTML video.
+  back_home: Back to the website
+  pause_rain: Pause rain
+  resume_rain: Resume rain
+  site_error: Something went wrong
+  not_found: Page not found.

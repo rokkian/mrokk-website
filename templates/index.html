@@ -1,114 +1,77 @@
 {{define "index.html"}}
 <!doctype html>
-<html lang="en">
+<html lang="{{.Language}}" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="{{.Content.MetaDescription}}">
-  <meta name="theme-color" content="#f4f5ef">
-  <title>{{.Content.SiteName}} — Personal website</title>
-  <link rel="icon" type="image/png" href="/static/images/favicon.png">
+  <meta name="theme-color" content="#263e37">
+  <title>{{.Content.SiteName}} — {{.Content.UI.cv_title}}</title>
+  {{template "site-assets" .}}
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-  <header class="site-header">
-    <a class="logo" href="/">{{.Content.SiteName}}<span>.</span></a>
-    <nav aria-label="Primary navigation">
-      <a href="/">Home</a>
-      <a href="/me">CV</a>
-      <a href="/blog">{{.Content.Navigation.Blog}}</a>
-      <a href="/contacts">Contacts</a>
-      <button class="theme-toggle" type="button" aria-label="{{.Content.Theme.DarkLabel}}" data-light-label="{{.Content.Theme.LightLabel}}" data-dark-label="{{.Content.Theme.DarkLabel}}" aria-pressed="false">
-        <span class="sun" aria-hidden="true">☼</span><span class="moon" aria-hidden="true">☾</span>
-      </button>
-    </nav>
-  </header>
+  <a class="skip-link" href="#main-content">{{.Content.UI.skip_content}}</a>
+  <div class="site-page">
+  {{template "site-header" .}}
 
-  <main>
-    <section class="hero" id="about">
-      <div class="hero-copy">
-        <p class="eyebrow">{{.Content.Hero.Eyebrow}}</p>
-        <h1>{{.Content.Hero.Title}}</h1>
+  <main tabindex="-1" id="main-content" class="resume-page">
+    <div class="resume-layout">
+      <aside class="resume-profile" aria-label="{{.Content.UI.professional_profile}}">
+        <div class="profile-heading">
+          {{if .Content.Hero.Image}}<img class="profile-photo" src="{{.Content.Hero.Image}}" alt="{{.Content.Hero.ImageAlt}}" width="80" height="80">{{end}}
+          <h1>{{.Content.Homepage.Name}}</h1>
+        </div>
+        <p class="profession">{{.Content.Homepage.Role}}</p>
         <p class="intro">{{.Content.Hero.Intro}}</p>
-        <a class="button" href="#work">{{.Content.Hero.Cta}} <span>↓</span></a>
-      </div>
-      {{if .Content.Hero.Image}}<figure class="hero-image"><img src="{{.Content.Hero.Image}}" alt="{{.Content.Hero.ImageAlt}}"></figure>{{end}}
-    </section>
-
-    <section class="about-grid">
-      <p class="section-label">{{.Content.About.Label}}</p>
-      <div>
-        <h2>{{.Content.About.Title}}</h2>
-        <p>{{.Content.About.Text}}</p>
-      </div>
-    </section>
-
-    <section class="experience" id="experience">
-      <div class="section-heading">
-        <p class="section-label">{{.Content.Experience.Label}}</p>
-        <p class="muted">{{.Content.Experience.Intro}}</p>
-      </div>
-      <div class="experience-list">
-        {{range .Content.Experience.Entries}}
-        <article class="experience-row">
-          <p class="experience-period">{{.Period}}</p>
-          <div>
-            <h3>{{.Role}} <span>· {{.Company}}</span></h3>
-            <p>{{.Description}}</p>
-          </div>
-        </article>
-        {{end}}
-      </div>
-    </section>
-
-    <section class="certifications" id="certifications">
-      <div class="section-heading">
-        <p class="section-label">{{.Content.Certifications.Label}}</p>
-        <p class="muted">{{.Content.Certifications.Intro}}</p>
-      </div>
-      <div class="certification-list">
-        {{range .Content.Certifications.Certificates}}
-        <article class="certification-row">
-          <div>
-            <h3>{{.Name}}</h3>
-            <p>{{.Issuer}} · {{.Issued}}</p>
-          </div>
-          {{if .Link}}<a class="arrow-link" href="{{.Link}}" aria-label="View {{.Name}} certification">↗</a>{{end}}
-        </article>
-        {{end}}
-      </div>
-    </section>
-
-    <section class="work" id="work">
-      <div class="section-heading">
-        <p class="section-label">{{.Content.Work.Label}}</p>
-        <p class="muted">{{.Content.Work.Intro}}</p>
-      </div>
-      <div class="project-list">
-        {{range $index, $project := .Content.Work.Projects}}
-        <article class="project-card">
-          <div>
-            <p class="project-number">{{printf "%02d" (addOne $index)}}</p>
-            <h3>{{$project.Name}}</h3>
-            <p>{{$project.Description}}</p>
-            <div class="tags">
-              {{range $project.Tags}}<span>{{.}}</span>{{end}}
+        <nav class="section-nav" aria-label="{{.Content.UI.cv_sections}}"><a href="#experience">{{.Content.Navigation.Experience}}</a><a href="#work">{{.Content.Navigation.Work}}</a><a href="#contact" >{{.Content.Navigation.Contact}}</a></nav>
+        <div class="profile-facts">
+          <details class="profile-disclosure"><summary>{{.Content.UI.about_work}}<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></summary><div><h2>{{.Content.About.Title}}</h2><p>{{.Content.About.Text}}</p></div></details>
+          <details class="profile-disclosure"><summary>{{.Content.UI.tools_skills}}<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></summary><div class="tags skills-list">{{range .Content.Skills}}<span>{{.}}</span>{{end}}</div></details>
+          <details class="profile-disclosure" id="certifications" open>
+            <summary>{{.Content.Certifications.Label}}<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></summary>
+            <div class="certification-list">
+              {{range .Content.Certifications.Certificates}}
+              <a class="credential" href="{{$.URL .Link}}">
+                {{if .Icon}}<img class="credential-icon" src="{{.Icon}}" alt="" width="48" height="48" decoding="async">{{end}}
+                <span class="credential-copy"><strong>{{.Name}}</strong><small>{{.Issuer}} · {{.Issued}}</small></span>
+                {{template "arrow-up-right" .}}
+              </a>
+              {{end}}
             </div>
+          </details>
+        </div>
+        <a class="profile-contact" href="mailto:{{.Content.Contact.Email}}">{{.Content.Contact.Email}}{{template "arrow-up-right" .}}</a>
+      </aside>
+      <div class="resume-body">
+        <section class="experience" id="experience" aria-labelledby="experience-title">
+          <div class="section-heading"><h2 id="experience-title">{{.Content.Experience.Label}}</h2><p>{{.Content.Experience.Intro}}</p></div>
+          <div class="experience-list">
+            {{range $index, $entry := .Content.Experience.Entries}}
+            <details class="experience-entry"{{if eq $index 0}} open{{end}}>
+              <summary>
+                <span class="entry-identity"><strong>{{$entry.Role}}</strong><span>{{$entry.Company}}</span></span>
+                <span class="entry-meta"><span>{{$entry.Period}}</span><span>{{$entry.Location}}</span></span>
+                <svg class="entry-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+              </summary>
+              <div class="experience-description">{{markdown $entry.Description}}</div>
+            </details>
+            {{end}}
           </div>
-          <a class="arrow-link" href="{{$project.Link}}" aria-label="Open {{$project.Name}}">↗</a>
-        </article>
-        {{end}}
+        </section>
+        <section class="work" id="work" aria-labelledby="work-title">
+          <div class="section-heading"><h2 id="work-title">{{.Content.Work.Label}}</h2><p>{{.Content.Work.Intro}}</p></div>
+          {{range .Content.Work.Projects}}
+          <article class="project-row"><div><h3>{{.Name}}</h3><p>{{.Description}}</p><div class="tags">{{range .Tags}}<span>{{.}}</span>{{end}}</div></div><a class="arrow-link" href="{{$.URL .Link}}" aria-label="{{printf $.Content.UI.open_project .Name}}">{{template "arrow-up-right" .}}</a></article>
+          {{end}}
+        </section>
+        <section class="resume-contact" id="contact"><h2>{{.Content.Contact.Title}}</h2><a class="button" href="mailto:{{.Content.Contact.Email}}">{{.Content.Contact.Cta}}{{template "arrow-up-right" .}}</a></section>
       </div>
-    </section>
-
-    <section class="contact" id="contact">
-      <p class="section-label">{{.Content.Contact.Label}}</p>
-      <h2>{{.Content.Contact.Title}}<br><a href="mailto:{{.Content.Contact.Email}}">{{.Content.Contact.Cta}}<span>↗</span></a></h2>
-    </section>
+    </div>
   </main>
 
   {{template "site-footer" .}}
-  <script src="/static/theme.js"></script>
+  </div>
 </body>
 </html>
 {{end}}

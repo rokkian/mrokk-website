@@ -1,29 +1,28 @@
 {{define "mattrolled.html"}}
 <!doctype html>
-<html lang="en">
+<html lang="{{.Language}}" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="{{.Content.Mattrolled.Message}}">
-  <meta name="theme-color" content="#d8ff58">
+  <meta name="theme-color" content="#263e37">
   <title>{{.Content.SiteName}} — Mattrolled</title>
-  <link rel="icon" type="image/png" href="/static/images/favicon.png">
+  {{template "site-assets" .}}
   <link rel="stylesheet" href="/static/styles.css">
 </head>
-<body class="mattrolled-body">
-  <main class="mattrolled-page">
-    <p class="eyebrow">{{.Content.Mattrolled.Eyebrow}}</p>
+<body>
+  <a class="skip-link" href="#main-content">{{.Content.UI.skip_content}}</a>
+  <div class="site-page">
+  {{template "site-header" .}}
+  <main tabindex="-1" id="main-content" class="mattrolled-page">
     <h1>{{.Content.Mattrolled.Title}}</h1>
-    {{if .Content.Mattrolled.Video}}<video class="mattrolled-gif" controls autoplay loop playsinline preload="metadata" aria-label="{{.Content.Mattrolled.GifAlt}}"><source src="{{.Content.Mattrolled.Video}}" type="video/mp4">Your browser does not support HTML video.</video>{{end}}
-    <p class="mattrolled-message">{{.Content.Mattrolled.Message}}</p>
-    <div class="mattrolled-links">
-      <a class="button" href="{{.Content.Mattrolled.Telegram}}" target="_blank" rel="noreferrer">Telegram <span>↗</span></a>
-      <a class="button" href="{{.Content.Mattrolled.LinkedIn}}" target="_blank" rel="noreferrer">LinkedIn <span>↗</span></a>
-      <a class="button" href="mailto:{{.Content.Contact.Email}}">{{.Content.Contact.Email}} <span>↗</span></a>
+    <div class="nfc-layout">
+      {{if .Content.Mattrolled.Video}}<video class="mattrolled-gif" controls autoplay loop playsinline preload="metadata" aria-label="{{.Content.Mattrolled.GifAlt}}"><source src="{{.Content.Mattrolled.Video}}" type="video/mp4">{{.Content.UI.video_fallback}}</video>{{end}}
+      <div class="nfc-copy"><p class="mattrolled-message">{{.Content.Mattrolled.Message}}</p><div class="mattrolled-links"><a href="{{.Content.Mattrolled.Telegram}}" target="_blank" rel="noreferrer">Telegram{{template "arrow-up-right" .}}</a><a href="{{.Content.Mattrolled.LinkedIn}}" target="_blank" rel="noreferrer">LinkedIn{{template "arrow-up-right" .}}</a><a href="mailto:{{.Content.Contact.Email}}">{{.Content.Contact.Email}}{{template "arrow-up-right" .}}</a></div><a class="back-link" href="{{.URL "/"}}">{{.Content.UI.back_home}}</a></div>
     </div>
-    <a class="mattrolled-home" href="/">← Back to the website</a>
   </main>
   {{template "site-footer" .}}
+  </div>
 </body>
 </html>
 {{end}}

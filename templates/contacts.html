@@ -1,46 +1,40 @@
 {{define "contacts.html"}}
 <!doctype html>
-<html lang="en">
+<html lang="{{.Language}}" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Public contact links for {{.Content.SiteName}}.">
-  <meta name="theme-color" content="#f4f5ef">
-  <title>{{.Content.SiteName}} — Contacts</title>
-  <link rel="icon" type="image/png" href="/static/images/favicon.png">
+  <meta name="description" content="{{.Content.UI.contacts_description}}">
+  <meta name="theme-color" content="#263e37">
+  <title>{{.Content.SiteName}} — {{.Content.UI.contacts_title}}</title>
+  {{template "site-assets" .}}
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-  <header class="site-header">
-    <a class="logo" href="/">{{.Content.SiteName}}<span>.</span></a>
-    <nav aria-label="Primary navigation">
-      <a href="/">Home</a>
-      <a href="/me">CV</a>
-      <a href="/blog">Blog</a>
-      <a href="/contacts">Contacts</a>
-      <button class="theme-toggle" type="button" aria-label="{{.Content.Theme.DarkLabel}}" data-light-label="{{.Content.Theme.LightLabel}}" data-dark-label="{{.Content.Theme.DarkLabel}}" aria-pressed="false">
-        <span class="sun" aria-hidden="true">☼</span><span class="moon" aria-hidden="true">☾</span>
-      </button>
-    </nav>
-  </header>
+  <a class="skip-link" href="#main-content">{{.Content.UI.skip_content}}</a>
+  <div class="site-page">
+  {{template "site-header" .}}
 
-  <main class="inner-page">
-    <section class="page-intro">
-      <p class="eyebrow">{{.Content.Contact.Label}}</p>
-      <h1>Let's connect.</h1>
-      <p class="intro">Find me through any of these public channels.</p>
-    </section>
-    <section class="detail-section contact-links">
-      {{range .Content.Contact.Links}}
-      <a class="contact-link" href="{{.URL}}"{{if hasPrefix .URL "http"}} target="_blank" rel="noreferrer"{{end}}>
-        <span><strong>{{.Name}}</strong><small>{{.Description}}</small></span><span class="arrow-link">↗</span>
-      </a>
-      {{end}}
-    </section>
+  <main tabindex="-1" id="main-content" class="contacts-page">
+    <div class="contact-layout">
+      <section class="contact-intro" aria-labelledby="contact-title">
+        <h1 id="contact-title">{{.Content.UI.contact_heading}}</h1>
+        <p class="intro">{{.Content.UI.contact_intro}}</p>
+        <a class="contact-profile" href="{{.URL "/me"}}">{{if .Content.Hero.Image}}<img src="{{.Content.Hero.Image}}" alt="" width="64" height="64">{{end}}<span><strong>{{.Content.Homepage.Name}}</strong><small>{{.Content.Homepage.Role}}</small></span>{{template "arrow-up-right" .}}</a>
+      </section>
+      <section class="contact-channels" aria-label="{{.Content.UI.contact_channels}}">
+        {{range .Content.Contact.Links}}{{if hasPrefix .URL "mailto:"}}
+        <a class="contact-link contact-mail" href="{{.URL}}"><span><small>{{.Description}}</small><strong>{{.Name}}</strong></span><span class="contact-arrow">{{template "arrow-up-right" .}}</span></a>
+        {{end}}{{end}}
+        <div class="social-channels">{{range .Content.Contact.Links}}{{if not (hasPrefix .URL "mailto:")}}
+          <a class="contact-link contact-social" href="{{.URL}}" target="_blank" rel="noreferrer"><span><strong>{{.Name}}</strong><small>{{.Description}}</small></span><span class="contact-arrow">{{template "arrow-up-right" .}}</span></a>
+        {{end}}{{end}}</div>
+      </section>
+    </div>
   </main>
 
   {{template "site-footer" .}}
-  <script src="/static/theme.js"></script>
+  </div>
 </body>
 </html>
 {{end}}

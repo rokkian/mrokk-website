@@ -64,12 +64,16 @@ type Certification struct {
 	Issuer string `yaml:"issuer"`
 	Issued string `yaml:"issued"`
 	Link   string `yaml:"link"`
+	Icon   string `yaml:"icon"`
 }
 
 type Content struct {
+	Language        string               `yaml:"language"`
+	UI              map[string]string    `yaml:"ui"`
 	SiteName        string               `yaml:"site_name"`
 	BaseURL         string               `yaml:"base_url"`
 	MetaDescription string               `yaml:"meta_description"`
+	Homepage        Homepage             `yaml:"homepage"`
 	Navigation      Navigation           `yaml:"navigation"`
 	Hero            Hero                 `yaml:"hero"`
 	About           About                `yaml:"about"`
@@ -83,6 +87,15 @@ type Content struct {
 	Contact         Contact              `yaml:"contact"`
 	Footer          Footer               `yaml:"footer"`
 	Theme           Theme                `yaml:"theme"`
+}
+
+type Homepage struct {
+	Name         string `yaml:"name"`
+	Role         string `yaml:"role"`
+	Intro        string `yaml:"intro"`
+	Evidence     string `yaml:"evidence"`
+	CVLabel      string `yaml:"cv_label"`
+	ContactLabel string `yaml:"contact_label"`
 }
 
 type RSSFeed struct {
@@ -211,16 +224,21 @@ type Footer struct {
 }
 
 type PageData struct {
-	Year    int
-	Content Content
-	Page    string
-	Post    *BlogPost
+	Language string
+	Path     string
+	Year     int
+	Content  Content
+	Page     string
+	Post     *BlogPost
 }
 
 func parseTemplates() *template.Template {
 	return template.Must(template.New("index.html").Funcs(template.FuncMap{
-		"addOne":    func(number int) int { return number + 1 },
 		"hasPrefix": func(value, prefix string) bool { return strings.HasPrefix(value, prefix) },
+		"markdown": func(value string) (template.HTML, error) {
+			rendered, err := renderMarkdown(value)
+			return template.HTML(rendered), err
+		},
 	}).ParseFS(websiteFiles, "templates/*.html"))
 }
 
@@ -245,18 +263,15 @@ func parsePostDate(dateStr string) time.Time {
 }
 
 func generateRSSFeed(content Content) ([]byte, error) {
-	baseURL := strings.TrimRight(content.BaseURL, "/")
-	if baseURL == "" {
-		baseURL = "https://mrokk.com"
-	}
+	baseURL := publicBaseURL(content)
 
 	channelTitle := content.SiteName + " — Blog"
-	channelLink := baseURL + "/blog"
-	feedURL := baseURL + "/blog/feed.xml"
+	channelLink := baseURL + localizedPath(content.Language, "/blog")
+	feedURL := baseURL + localizedPath(content.Language, "/blog/feed.xml")
 
 	items := make([]RSSItem, 0, len(content.Blog.Posts))
 	for _, post := range content.Blog.Posts {
-		postURL := baseURL + "/blog/" + post.Slug
+		postURL := baseURL + localizedPath(content.Language, "/blog/"+post.Slug)
 		pubDate := parsePostDate(post.Date).Format(time.RFC1123Z)
 
 		var encodedContent *CDATAText
@@ -283,7 +298,7 @@ func generateRSSFeed(content Content) ([]byte, error) {
 			Title:         channelTitle,
 			Link:          channelLink,
 			Description:   content.Blog.Intro,
-			Language:      "en",
+			Language:      languageOrEnglish(content.Language),
 			LastBuildDate: time.Now().UTC().Format(time.RFC1123Z),
 			AtomLink: AtomLink{
 				Href: feedURL,
@@ -301,7 +316,7 @@ func generateRSSFeed(content Content) ([]byte, error) {
 	return append([]byte(xml.Header), output...), nil
 }
 
-func setupRouter(content Content, tmpl *template.Template, feedXML []byte) http.Handler {
+func setupRouter(contents map[string]Content, tmpl *template.Template, feeds map[string][]byte) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.Throttle(100))
 	r.Use(readOnlyRequests)
@@ -314,94 +329,21 @@ func setupRouter(content Content, tmpl *template.Template, feedXML []byte) http.
 	r.Mount("/static", http.FileServer(http.FS(websiteFiles)))
 	r.Get("/healthz", healthHandler)
 
-	feedHandler := func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/xml; charset=utf-8")
-		w.Header().Set("Cache-Control", "public, max-age=3600")
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write(feedXML)
-	}
-	r.Get("/blog/feed.xml", feedHandler)
-	r.Get("/feed.xml", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/blog/feed.xml", http.StatusMovedPermanently)
-	})
 	r.Get("/ifconfig", ifconfigHandler)
 	r.Get("/ip", ifconfigHandler)
-
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		if tmpl == nil {
-			return
-		}
-		data := PageData{Year: time.Now().Year(), Content: content, Page: "landing"}
-		if err := tmpl.ExecuteTemplate(w, "home.html", data); err != nil {
-			log.Printf("render homepage: %v", err)
-			http.Error(w, "Something went wrong", http.StatusInternalServerError)
-		}
-	})
-	r.Get("/me", func(w http.ResponseWriter, r *http.Request) {
-		if tmpl == nil {
-			return
-		}
-		data := PageData{Year: time.Now().Year(), Content: content, Page: "resume"}
-		if err := tmpl.ExecuteTemplate(w, "index.html", data); err != nil {
-			log.Printf("render resume page: %v", err)
-			http.Error(w, "Something went wrong", http.StatusInternalServerError)
-		}
-	})
-	r.Get("/contacts", func(w http.ResponseWriter, r *http.Request) {
-		if tmpl == nil {
-			return
-		}
-		data := PageData{Year: time.Now().Year(), Content: content, Page: "contacts"}
-		if err := tmpl.ExecuteTemplate(w, "contacts.html", data); err != nil {
-			log.Printf("render contacts page: %v", err)
-			http.Error(w, "Something went wrong", http.StatusInternalServerError)
-		}
-	})
-	rickrollHandler := func(w http.ResponseWriter, r *http.Request) {
-		if tmpl == nil {
-			return
-		}
-		data := PageData{Year: time.Now().Year(), Content: content, Page: "mattrolled"}
-		if err := tmpl.ExecuteTemplate(w, "mattrolled.html", data); err != nil {
-			log.Printf("render rickrolled page: %v", err)
-			http.Error(w, "Something went wrong", http.StatusInternalServerError)
+	for _, language := range []string{"en", "it"} {
+		if content, ok := contents[language]; ok {
+			content.Language = language
+			registerLocalizedPages(r, content, tmpl, feeds[language])
 		}
 	}
-	r.Get("/rickrolled", rickrollHandler)
-	r.Get("/mattrolled", rickrollHandler)
-
-	r.Get("/blog", func(w http.ResponseWriter, r *http.Request) {
-		if tmpl == nil {
-			return
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		language := "en"
+		if strings.HasPrefix(r.URL.Path, "/it/") || r.URL.Path == "/it" {
+			language = "it"
 		}
-		data := PageData{Year: time.Now().Year(), Content: content, Page: "blog"}
-		if err := tmpl.ExecuteTemplate(w, "blog.html", data); err != nil {
-			log.Printf("render blog page: %v", err)
-			http.Error(w, "Something went wrong", http.StatusInternalServerError)
-		}
-	})
-	r.Get("/blog/{slug}", func(w http.ResponseWriter, r *http.Request) {
-		if tmpl == nil {
-			return
-		}
-		slug := chi.URLParam(r, "slug")
-		var post *BlogPost
-		for index := range content.Blog.Posts {
-			if content.Blog.Posts[index].Slug == slug {
-				post = &content.Blog.Posts[index]
-				break
-			}
-		}
-		if post == nil {
-			http.NotFound(w, r)
-			return
-		}
-
-		data := PageData{Year: time.Now().Year(), Content: content, Page: "post", Post: post}
-		if err := tmpl.ExecuteTemplate(w, "blog-post.html", data); err != nil {
-			log.Printf("render blog post %s: %v", slug, err)
-			http.Error(w, "Something went wrong", http.StatusInternalServerError)
-		}
+		w.Header().Set("Content-Language", language)
+		http.Error(w, contents[language].UI["not_found"], http.StatusNotFound)
 	})
 
 	return r
@@ -410,17 +352,18 @@ func setupRouter(content Content, tmpl *template.Template, feedXML []byte) http.
 func main() {
 	tmpl := parseTemplates()
 
-	content, err := loadContent("content.yaml")
+	contents, err := loadSiteContent(".")
 	if err != nil {
-		log.Fatalf("load content.yaml: %v", err)
+		log.Fatalf("load site content: %v", err)
 	}
-
-	feedXML, err := generateRSSFeed(content)
-	if err != nil {
-		log.Fatalf("generate RSS feed: %v", err)
+	feeds := make(map[string][]byte, len(contents))
+	for language, content := range contents {
+		feeds[language], err = generateRSSFeed(content)
+		if err != nil {
+			log.Fatalf("generate %s RSS feed: %v", language, err)
+		}
 	}
-
-	r := setupRouter(content, tmpl, feedXML)
+	r := setupRouter(contents, tmpl, feeds)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -528,7 +471,7 @@ func readOnlyRequests(next http.Handler) http.Handler {
 
 func securityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'")
 		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
 		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()")
 		w.Header().Set("X-Content-Type-Options", "nosniff")

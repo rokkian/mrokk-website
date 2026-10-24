@@ -86,7 +86,7 @@ func TestSecurityHeaders(t *testing.T) {
 	handler.ServeHTTP(response, request)
 
 	wantHeaders := map[string]string{
-		"Content-Security-Policy":   "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
+		"Content-Security-Policy":   "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
 		"Referrer-Policy":           "strict-origin-when-cross-origin",
 		"Permissions-Policy":        "camera=(), microphone=(), geolocation=(), payment=()",
 		"X-Content-Type-Options":    "nosniff",
@@ -151,6 +151,38 @@ func TestHealthHandler(t *testing.T) {
 	}
 	if response.Header().Get("Cache-Control") != "no-store" {
 		t.Fatalf("health endpoint must not be cached")
+	}
+}
+
+func TestPublicPagesRender(t *testing.T) {
+	content, err := loadContent("content.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	feedXML, err := generateRSSFeed(content)
+	if err != nil {
+		t.Fatal(err)
+	}
+	router := setupRouter(map[string]Content{"en": content}, parseTemplates(), map[string][]byte{"en": feedXML})
+	for _, path := range []string{"/", "/me", "/contacts", "/blog", "/blog/lorem", "/mattrolled"} {
+		t.Run(path, func(t *testing.T) {
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, path, nil))
+			if response.Code != http.StatusOK {
+				t.Fatalf("GET %s returned %d", path, response.Code)
+			}
+			body := response.Body.String()
+			if !strings.Contains(body, "</html>") || strings.Contains(body, "Something went wrong") {
+				t.Fatalf("GET %s did not render a complete page", path)
+			}
+			if path == "/" {
+				for _, expected := range []string{content.Homepage.Role, content.Homepage.CVLabel, content.Homepage.ContactLabel} {
+					if !strings.Contains(body, template.HTMLEscapeString(expected)) {
+						t.Errorf("homepage is missing configured content %q", expected)
+					}
+				}
+			}
+		})
 	}
 }
 
@@ -226,7 +258,7 @@ func TestFeedEndpoint(t *testing.T) {
 		t.Fatalf("generateRSSFeed failed: %v", err)
 	}
 
-	router := setupRouter(content, nil, feedXML)
+	router := setupRouter(map[string]Content{"en": content}, nil, map[string][]byte{"en": feedXML})
 
 	// Test GET /blog/feed.xml
 	req := httptest.NewRequest(http.MethodGet, "/blog/feed.xml", nil)
@@ -311,7 +343,7 @@ func TestGetClientIP(t *testing.T) {
 }
 
 func TestIfconfigEndpoint(t *testing.T) {
-	router := setupRouter(Content{}, nil, nil)
+	router := setupRouter(nil, nil, nil)
 
 	// 1. Test plain text default on /ifconfig
 	req := httptest.NewRequest(http.MethodGet, "/ifconfig", nil)

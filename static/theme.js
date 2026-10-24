@@ -1,59 +1,25 @@
-const toggle = document.querySelector('.theme-toggle');
-const savedTheme = localStorage.getItem('theme');
+(() => {
+  const root = document.documentElement;
+  let savedTheme;
+  try { savedTheme = localStorage.getItem('theme'); } catch { /* A saved preference is optional. */ }
+  root.dataset.theme = savedTheme === 'light' ? 'light' : 'dark';
 
-if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-  document.documentElement.dataset.theme = 'dark';
-}
-
-function updateThemeButton() {
-  const dark = document.documentElement.dataset.theme === 'dark';
-  toggle.setAttribute('aria-pressed', dark);
-  toggle.setAttribute('aria-label', dark ? toggle.dataset.lightLabel : toggle.dataset.darkLabel);
-}
-
-updateThemeButton();
-
-toggle.addEventListener('click', () => {
-  const dark = document.documentElement.dataset.theme !== 'dark';
-  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-  localStorage.setItem('theme', dark ? 'dark' : 'light');
-  updateThemeButton();
-});
-
-const emailCopy = document.querySelector('.email-copy');
-
-async function copyEmail(email) {
-  if (navigator.clipboard && window.isSecureContext) {
-    await navigator.clipboard.writeText(email);
-    return;
-  }
-
-  const textArea = document.createElement('textarea');
-  textArea.value = email;
-  textArea.setAttribute('readonly', '');
-  textArea.style.position = 'fixed';
-  textArea.style.opacity = '0';
-  document.body.appendChild(textArea);
-  textArea.select();
-  const copied = document.execCommand('copy');
-  textArea.remove();
-  if (!copied) throw new Error('Copy command failed');
-}
-
-emailCopy.addEventListener('click', async () => {
-  const email = emailCopy.dataset.email;
-  const originalLabel = emailCopy.textContent;
-
-  try {
-    await copyEmail(email);
-    emailCopy.textContent = 'Copied!';
-    emailCopy.classList.add('is-copied');
-    setTimeout(() => {
-      emailCopy.textContent = originalLabel;
-      emailCopy.classList.remove('is-copied');
-    }, 1400);
-  } catch (error) {
-    emailCopy.textContent = 'Copy failed';
-    setTimeout(() => { emailCopy.textContent = originalLabel; }, 1400);
-  }
-});
+  document.addEventListener('DOMContentLoaded', () => {
+    const button = document.querySelector('.theme-control');
+    const themeColor = document.querySelector('meta[name="theme-color"]');
+    if (!button) return;
+    function updateTheme() {
+      const dark = root.dataset.theme === 'dark';
+      button.setAttribute('aria-pressed', String(dark));
+      button.setAttribute('aria-label', dark ? button.dataset.lightLabel : button.dataset.darkLabel);
+      if (themeColor) themeColor.content = dark ? '#263e37' : '#e5ede2';
+    }
+    updateTheme();
+    button.hidden = false;
+    button.addEventListener('click', () => {
+      root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+      try { localStorage.setItem('theme', root.dataset.theme); } catch { /* Theme works without storage. */ }
+      updateTheme();
+    });
+  });
+})();
