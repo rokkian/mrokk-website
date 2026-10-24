@@ -1,0 +1,177 @@
+name: CI and deploy
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Keep production runs in order; only superseded PR checks are cancelled.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  test:
+    name: Go checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Check formatting
+        run: |
+          unformatted=$(gofmt -l .)
+          if [[ -n "$unformatted" ]]; then
+            printf 'Run gofmt on:\n%s\n' "$unformatted"
+            exit 1
+          fi
+      - name: Vet
+        run: go vet ./...
+      - name: Test with race detector
+        run: go test -race -count=1 ./...
+
+  container:
+    name: Container checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build runtime image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: gowebsite:ci
+          cache-from: type=gha,scope=mrokk-web
+          cache-to: type=gha,mode=max,scope=mrokk-web
+      - name: Smoke test runtime image
+        run: |
+          docker run --detach --name site-smoke --publish 127.0.0.1:8080:8080 gowebsite:ci
+          trap 'docker logs site-smoke; docker rm --force site-smoke' EXIT
+          curl --fail --silent --show-error --retry 15 --retry-all-errors \
+            --retry-delay 2 --max-time 5 http://127.0.0.1:8080/healthz
+          curl --fail --silent --show-error --max-time 10 http://127.0.0.1:8080/ > /dev/null
+          curl --fail --silent --show-error --max-time 10 http://127.0.0.1:8080/it/ > /dev/null
+
+  deploy:
+    name: Deploy production
+    needs: [test, container]
+    if: >-
+      github.repository == 'rokkian/mrokk-website' &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      GCP_PROJECT_ID: pinebula
+      GCP_REGION: europe-west1
+      GAR_REPOSITORY: personal-site
+      CLOUD_RUN_SERVICE: mrokk-web
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check deployment configuration
+        env:
+          WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+          DEPLOY_SERVICE_ACCOUNT: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          RUNTIME_SERVICE_ACCOUNT: ${{ vars.GCP_RUNTIME_SERVICE_ACCOUNT }}
+        run: |
+          : "${WIF_PROVIDER:?Run deploy/setup-github-wif.py first}"
+          : "${DEPLOY_SERVICE_ACCOUNT:?Run deploy/setup-github-wif.py first}"
+          : "${RUNTIME_SERVICE_ACCOUNT:?Run deploy/setup-github-wif.py first}"
+      - name: Set image name
+        id: image
+        run: |
+          echo "uri=${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPOSITORY}/${CLOUD_RUN_SERVICE}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          token_format: access_token
+      - name: Log in to Artifact Registry
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ${{ env.GCP_REGION }}-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+      - name: Publish image
+        id: publish
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ steps.image.outputs.uri }}:${{ github.sha }}
+            ${{ steps.image.outputs.uri }}:latest
+          cache-from: type=gha,scope=mrokk-web
+          provenance: mode=min
+          sbom: true
+      # Refresh the short-lived OIDC credentials after the container build.
+      - name: Authenticate for deployment
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+      - name: Deploy immutable image
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@2028e2d7d30a78c6910e0632e48dd561b064884d # v3.0.1
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          region: ${{ env.GCP_REGION }}
+          service: ${{ env.CLOUD_RUN_SERVICE }}
+          image: ${{ steps.image.outputs.uri }}@${{ steps.publish.outputs.digest }}
+          revision_traffic: LATEST=100
+          flags: >-
+            --service-account=${{ vars.GCP_RUNTIME_SERVICE_ACCOUNT }}
+            --min-instances=0
+            --max-instances=1
+            --cpu=1
+            --memory=256Mi
+            --port=8080
+      - name: Verify deployed service
+        env:
+          SERVICE_URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          curl --fail --silent --show-error --retry 5 --retry-all-errors \
+            --retry-delay 3 --max-time 30 "${SERVICE_URL}/healthz"
+      - name: Write deployment summary
+        env:
+          SERVICE_URL: ${{ steps.deploy.outputs.url }}
+          IMAGE_URI: ${{ steps.image.outputs.uri }}
+          IMAGE_DIGEST: ${{ steps.publish.outputs.digest }}
+        run: |
+          {
+            echo '### Production deployment'
+            echo "- Commit: \`${GITHUB_SHA}\`"
+            echo "- Image: \`${IMAGE_URI}@${IMAGE_DIGEST}\`"
+            echo "- Service: ${SERVICE_URL}"
+          } >> "$GITHUB_STEP_SUMMARY"

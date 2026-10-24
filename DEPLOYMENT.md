@@ -78,64 +78,65 @@ gcloud beta run domain-mappings describe \
 
 In Cloudflare, add every record listed under `resourceRecords`. Use **DNS only** while the Google-managed certificate is provisioning. After `https://mrokk.com` works, Cloudflare proxying can be enabled if desired.
 
-## 6. Automated CI/CD with Cloud Build (GitHub)
+## 6. Automated CI/CD with GitHub Actions
 
-The repository includes a [`cloudbuild.yaml`](cloudbuild.yaml) pipeline that runs tests, builds and tags the container image (with `$SHORT_SHA` and `latest`), pushes to Artifact Registry, and deploys to Cloud Run.
+[CI and deploy](.github/workflows/ci.yml) replaces the automated Cloud Build path:
 
-### Step A: Grant Cloud Build permissions
+1. Pull requests and pushes to `main` run formatting checks, `go vet`, and Go tests with the race detector. Go's version comes from `go.mod`.
+2. A separate job builds the Linux/amd64 runtime image with Buildx and GitHub's layer cache, starts it, and checks `/healthz`, `/`, and `/it/`. This also validates the runtime content files and embedded assets on pull requests.
+3. Once both jobs pass on `main`, the `production` deployment job authenticates through GitHub OIDC and Google Workload Identity Federation (WIF). It publishes full-commit-SHA and `latest` tags to `europe-west1-docker.pkg.dev/pinebula/personal-site/mrokk-web`, with build provenance and an SBOM.
+4. Cloud Run deploys the immutable **image digest**, routes traffic to the new revision, and checks its public `/healthz`. The Actions summary records the commit, digest, and service URL.
 
-To deploy to Cloud Run, Cloud Build's service account needs the appropriate IAM roles. Run:
+The service uses the existing runtime service account, one CPU, 256 MiB RAM, port 8080, and revision autoscaling from zero to one instance, matching `cloudbuild.yaml`. Its existing public access and domain mapping are preserved. Failed checks stop deployment; a failed post-deploy health check marks the run as failed and does not automatically roll back traffic.
+
+### One-time WIF setup
+
+Authenticate `gcloud` as a Pinebula administrator and `gh` as a repository administrator, then run from the repository root:
 
 ```sh
-PROJECT_ID="pinebula"  # or your project ID
-PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
-CB_SA="${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com"
-
-# Allow Cloud Build to manage Cloud Run
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:${CB_SA}" \
-  --role="roles/run.admin"
-
-# Allow Cloud Build to push container images to Artifact Registry
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:${CB_SA}" \
-  --role="roles/artifactregistry.writer"
-
-# Allow Cloud Build to act as the runtime service account
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:${CB_SA}" \
-  --role="roles/iam.serviceAccountUser"
+python3 deploy/setup-github-wif.py
 ```
 
-> **Note**: If your project uses the Compute Engine service account for Cloud Build (`${PROJECT_NUMBER}-compute@developer.gserviceaccount.com`), grant the roles to that account instead.
+The [setup script](deploy/setup-github-wif.py) checks the existing service and registry, enables the required APIs, creates or reuses the dedicated identity, and configures GitHub. It can be rerun after a partial failure. It creates:
 
-### Step B: Connect your GitHub repository
+- Workload Identity Pool `mrokk-website` with provider `github` in project `pinebula`.
+- Service account `github-mrokk-deploy@pinebula.iam.gserviceaccount.com`.
+- GitHub environment `production`, with a deployment branch rule for `main`.
+- Repository variables `GCP_WIF_PROVIDER`, `GCP_SERVICE_ACCOUNT`, and `GCP_RUNTIME_SERVICE_ACCOUNT`. These identifiers are configuration, not secrets.
 
-1. In the Google Cloud Console, navigate to **Cloud Build** > **Triggers** (or **Repositories**).
-2. Click **Connect Repository** (or **Manage Repositories**).
-3. Select **GitHub (Cloud Build GitHub App)** or **2nd gen** and authenticate.
-4. Select your public repository (`rokkian/mrokk-website`).
+The WIF provider checks the numeric repository and owner IDs, `refs/heads/main`, the exact workflow path `.github/workflows/ci.yml`, the `production` subject, and the `push` or `workflow_dispatch` event. Only the deployment job requests `id-token: write`; PR jobs have read-only repository permissions and no Google Cloud credentials. This follows Google's guidance to [restrict federation using numeric IDs](https://docs.cloud.google.com/iam/docs/workload-identity-federation-with-deployment-pipelines).
 
-### Step C: Create the deployment trigger
+The deployment account has only these resource-scoped roles:
 
-1. Go to **Cloud Build** > **Triggers** > **Create Trigger**.
-2. Set the following options:
-   - **Name**: `deploy-mrokk-web-on-push`
-   - **Event**: `Push to a branch`
-   - **Source**: Select your connected repository (`rokkian/mrokk-website`)
-   - **Branch**: `^main$`
-   - **Configuration**: `Cloud Build configuration file (yaml or json)`
-   - **Location**: `Repository` at `/cloudbuild.yaml`
-3. Click **Create**.
+| Role | Resource |
+| --- | --- |
+| `roles/artifactregistry.writer` | `personal-site` Artifact Registry repository |
+| `roles/run.developer` | Existing `mrokk-web` Cloud Run service |
+| `roles/iam.serviceAccountUser` | Existing Cloud Run runtime service account |
+| `roles/iam.workloadIdentityUser` | Deployment account, granted to this repository's federated identity |
 
-> **Security Note for Public Repositories**: Because this is a public repository, only configure deployment triggers on pushes to `main`. Do not configure automated deployment triggers on untrusted Pull Requests.
+No service account key is generated. The Google authentication action's temporary `gha-creds-*.json` files are excluded from Git, Docker contexts, and Cloud Build uploads. Cloud Run authentication is refreshed after image publishing to account for the short OIDC token lifetime. See the [authentication action](https://github.com/google-github-actions/auth) for details.
 
-### Step D: Test the pipeline
+### Operation and maintenance
 
-Push a commit to `main`, or click **Run** on the trigger in the Cloud Build Console to verify the build, test, and deploy workflow.
+Push to `main` to deploy, or select **Actions → CI and deploy → Run workflow** with branch `main`. IAM changes can take a few minutes to propagate after the initial setup. Production runs are serialized; superseded pending runs can be replaced by a newer push, while active production runs are allowed to finish. New PR runs cancel superseded PR checks.
+
+All third-party actions are pinned to commit SHAs. [Dependabot](.github/dependabot.yml) checks monthly for updates to GitHub Actions, Go modules (including indirect dependencies), and Docker base images. Actions updates are grouped; Go minor and patch updates are grouped, while Go major updates and Docker image updates get separate PRs. Dependency PRs run the same Go and container checks; merging to `main` triggers deployment. If the repository, owner, workflow path, branch, or environment changes, update the workflow and setup script together and rerun setup.
+
+`cloudbuild.yaml` remains available for manual use. Keep Cloud Build push triggers disabled when using GitHub Actions to avoid competing deployments.
+
+To roll back to a previously healthy revision:
+
+```sh
+gcloud run revisions list --project=pinebula --region=europe-west1 --service=mrokk-web
+gcloud run services update-traffic mrokk-web \
+  --project=pinebula --region=europe-west1 --to-revisions=REVISION_NAME=100
+```
+
+Choose the known healthy revision from the list. The next successful Actions deployment moves traffic to its new revision again.
 
 ## Updating the site
 
-- **Automated**: Push your changes to `main` on GitHub; Cloud Build will automatically run tests, build the image, and deploy.
+- **Automated**: Push your changes to `main` on GitHub; GitHub Actions runs checks, builds and publishes the image, and deploys through WIF.
 - **Manual**: Run steps 3 and 4 (or `just deploy`).
 

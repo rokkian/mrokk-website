@@ -60,7 +60,9 @@ The server reads both content files once at startup. Restart `go run .` after ch
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for the Cloud Run and Cloudflare guide. The [justfile](justfile) provides the main commands.
 
-Set `GCP_PROJECT_ID` if your Google Cloud project is not `pinebula`, then run `just config`, `just enable-apis`, `just create-repository`, and `just deploy`.
+GitHub Actions checks pull requests and automatically deploys successful pushes to `main` to Pinebula through Workload Identity Federation. The [CI/CD setup](DEPLOYMENT.md#6-automated-cicd-with-github-actions) provisions the dedicated identity and GitHub configuration without service account keys.
+
+For manual deployment, set `GCP_PROJECT_ID` if your Google Cloud project is not `pinebula`, then run `just config`, `just enable-apis`, `just create-repository`, and `just deploy`.
 
 ## Connect `mrokk.com` through Cloudflare
 

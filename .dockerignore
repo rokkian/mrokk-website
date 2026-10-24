@@ -1,5 +1,7 @@
 .git
 .gitignore
+.github/
+gha-creds-*.json
 .agents/
 .codex/
 .impeccable/
