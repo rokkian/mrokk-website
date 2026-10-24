@@ -138,6 +138,16 @@ func TestLoadContentRendersMarkdownPosts(t *testing.T) {
 	}
 }
 
+func TestCloudRunHealthEndpoint(t *testing.T) {
+	router := setupRouter(nil, nil, nil)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/health", nil))
+
+	if response.Code != http.StatusOK || response.Body.String() != "ok\n" {
+		t.Fatalf("GET /health returned %d %q, want 200 %q", response.Code, response.Body.String(), "ok\n")
+	}
+}
+
 func TestHealthHandler(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	response := httptest.NewRecorder()

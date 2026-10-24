@@ -327,6 +327,8 @@ func setupRouter(contents map[string]Content, tmpl *template.Template, feeds map
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Compress(5))
 	r.Mount("/static", http.FileServer(http.FS(websiteFiles)))
+	// Cloud Run reserves some paths ending in z; external checks use /health.
+	r.Get("/health", healthHandler)
 	r.Get("/healthz", healthHandler)
 
 	r.Get("/ifconfig", ifconfigHandler)

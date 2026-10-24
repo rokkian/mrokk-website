@@ -65,7 +65,7 @@ jobs:
           docker run --detach --name site-smoke --publish 127.0.0.1:8080:8080 gowebsite:ci
           trap 'docker logs site-smoke; docker rm --force site-smoke' EXIT
           curl --fail --silent --show-error --retry 15 --retry-all-errors \
-            --retry-delay 2 --max-time 5 http://127.0.0.1:8080/healthz
+            --retry-delay 2 --max-time 5 http://127.0.0.1:8080/health
           curl --fail --silent --show-error --max-time 10 http://127.0.0.1:8080/ > /dev/null
           curl --fail --silent --show-error --max-time 10 http://127.0.0.1:8080/it/ > /dev/null
 
@@ -162,7 +162,7 @@ jobs:
           SERVICE_URL: ${{ steps.deploy.outputs.url }}
         run: |
           curl --fail --silent --show-error --retry 5 --retry-all-errors \
-            --retry-delay 3 --max-time 30 "${SERVICE_URL}/healthz"
+            --retry-delay 3 --max-time 30 "${SERVICE_URL}/health"
       - name: Write deployment summary
         env:
           SERVICE_URL: ${{ steps.deploy.outputs.url }}

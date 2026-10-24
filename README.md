@@ -22,7 +22,7 @@ The site is organized into a landing page, a one-page CV, and a separate blog:
 - `/ifconfig` (or `/ip`) — caller IP network echo (`text/plain` or `application/json`)
 - `/contacts` — public contact links
 - `/mattrolled` — event NFC joke page with configurable video and contact links
-- `/healthz` — lightweight health check returning `200 OK`
+- `/health` — lightweight health check returning `200 OK`; use this path on Cloud Run, which reserves some paths ending in `z`. `/healthz` remains a local compatibility alias.
 
 Italian pages use the same paths under `/it/`, including `/it/me`, `/it/contacts`, `/it/blog` and `/it/blog/feed.xml`. `/it` redirects to `/it/`. The shared IT/EN link switches to the equivalent page, and internal navigation keeps the selected language. Existing English URLs remain unchanged. Language selection uses explicit URLs and works without JavaScript.
 

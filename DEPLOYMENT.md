@@ -83,9 +83,9 @@ In Cloudflare, add every record listed under `resourceRecords`. Use **DNS only**
 [CI and deploy](.github/workflows/ci.yml) replaces the automated Cloud Build path:
 
 1. Pull requests and pushes to `main` run formatting checks, `go vet`, and Go tests with the race detector. Go's version comes from `go.mod`.
-2. A separate job builds the Linux/amd64 runtime image with Buildx and GitHub's layer cache, starts it, and checks `/healthz`, `/`, and `/it/`. This also validates the runtime content files and embedded assets on pull requests.
+2. A separate job builds the Linux/amd64 runtime image with Buildx and GitHub's layer cache, starts it, and checks `/health`, `/`, and `/it/`. This also validates the runtime content files and embedded assets on pull requests.
 3. Once both jobs pass on `main`, the `production` deployment job authenticates through GitHub OIDC and Google Workload Identity Federation (WIF). It publishes full-commit-SHA and `latest` tags to `europe-west1-docker.pkg.dev/pinebula/personal-site/mrokk-web`, with build provenance and an SBOM.
-4. Cloud Run deploys the immutable **image digest**, routes traffic to the new revision, and checks its public `/healthz`. The Actions summary records the commit, digest, and service URL.
+4. Cloud Run deploys the immutable **image digest**, routes traffic to the new revision, and checks its public `/health`. The Actions summary records the commit, digest, and service URL. Use `/health` because Cloud Run [reserves some URL paths ending in `z`](https://docs.cloud.google.com/run/docs/known-issues#reserved-url-paths), including `/healthz`, before requests reach the container.
 
 The service uses the existing runtime service account, one CPU, 256 MiB RAM, port 8080, and revision autoscaling from zero to one instance, matching `cloudbuild.yaml`. Its existing public access and domain mapping are preserved. Failed checks stop deployment; a failed post-deploy health check marks the run as failed and does not automatically roll back traffic.
 
@@ -104,7 +104,7 @@ The [setup script](deploy/setup-github-wif.py) checks the existing service and r
 - GitHub environment `production`, with a deployment branch rule for `main`.
 - Repository variables `GCP_WIF_PROVIDER`, `GCP_SERVICE_ACCOUNT`, and `GCP_RUNTIME_SERVICE_ACCOUNT`. These identifiers are configuration, not secrets.
 
-The WIF provider checks the numeric repository and owner IDs, `refs/heads/main`, the exact workflow path `.github/workflows/ci.yml`, the `production` subject, and the `push` or `workflow_dispatch` event. Only the deployment job requests `id-token: write`; PR jobs have read-only repository permissions and no Google Cloud credentials. This follows Google's guidance to [restrict federation using numeric IDs](https://docs.cloud.google.com/iam/docs/workload-identity-federation-with-deployment-pipelines).
+The WIF provider checks the numeric repository and owner IDs, `refs/heads/main`, the exact workflow path `.github/workflows/ci.yml`, the `environment` claim equal to `production`, and the `push` or `workflow_dispatch` event. Checking the environment claim directly supports both legacy and [immutable OIDC subjects](https://docs.github.com/en/actions/reference/security/oidc#immutable-subject-claims), whose repository segment includes owner and repository IDs. Only the deployment job requests `id-token: write`; PR jobs have read-only repository permissions and no Google Cloud credentials. This follows Google's guidance to [restrict federation using numeric IDs](https://docs.cloud.google.com/iam/docs/workload-identity-federation-with-deployment-pipelines).
 
 The deployment account has only these resource-scoped roles:
 
